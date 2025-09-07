@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Policy Definition Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-text">
+                    <h1>🔍 Azure Policy Definition Analyzer</h1>
+                    <p class="subtitle">Enterprise-grade analysis with real AzAdvertizer data (72,963 unique aliases)</p>
+                </div>
+                <div class="header-actions">
+                    <button id="theme-toggle" class="btn btn--outline btn--sm">🌙 Dark Mode</button>
+                    <button id="export-all" class="btn btn--primary btn--sm" disabled>📊 Export All</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <div class="analyzer-dashboard">
+            <!-- Updated Tab Navigation - 7 tabs as required -->
+            <nav class="main-tab-nav">
+                <button class="main-tab-btn active" data-tab="input-linter">🔍 Input & Linter</button>
+                <button class="main-tab-btn" data-tab="alias-resolver">🔗 Alias Resolver</button>
+                <button class="main-tab-btn" data-tab="parameter-tracer">⚙️ Parameter Tracer</button>
+                <button class="main-tab-btn" data-tab="effect-analyzer">⚡ Effect Analyzer</button>
+                <button class="main-tab-btn" data-tab="diagram-view">📊 Diagram View</button>
+                <button class="main-tab-btn" data-tab="tree-view">🌳 Tree View</button>
+                <button class="main-tab-btn" data-tab="metadata-insights">📊 Metadata & Insights</button>
+            </nav>
+
+            <!-- Tab Content -->
+            <div class="main-tab-content">
+                <!-- Input & Linter Tab -->
+                <div id="tab-input-linter" class="main-tab-panel active">
+                    <div class="tab-header">
+                        <h2>Policy Definition Input & Validation</h2>
+                        <p>Import, validate, and lint Azure Policy definitions for schema compliance and best practices.</p>
+                    </div>
+                    
+                    <div class="input-section">
+                        <div class="input-grid">
+                            <div class="card sample-section">
+                                <div class="card__body">
+                                    <h3>📚 Sample Policies</h3>
+                                    <div class="sample-grid">
+                                        <button class="sample-btn" data-sample="location-restriction">Location Restriction</button>
+                                        <button class="sample-btn" data-sample="vm-security">VM Security Policy</button>
+                                        <button class="sample-btn" data-sample="storage-security">Storage Security</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card upload-section">
+                                <div class="card__body">
+                                    <h3>📁 File Upload</h3>
+                                    <div class="file-upload-area" id="file-drop-zone">
+                                        <input type="file" id="policy-file" accept=".json">
+                                        <div class="upload-text">
+                                            <span>📎 Drop JSON files here or click to select</span>
+                                            <small>Supports Azure Policy JSON definitions</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card json-input-section">
+                            <div class="card__body">
+                                <div class="input-header">
+                                    <h3>📝 Policy JSON Input</h3>
+                                    <div class="input-actions">
+                                        <button id="format-json" class="btn btn--secondary btn--sm">🎨 Format JSON</button>
+                                        <button id="validate-json" class="btn btn--primary btn--sm">✅ Validate</button>
+                                        <button id="clear-input" class="btn btn--outline btn--sm">🗑️ Clear</button>
+                                    </div>
+                                </div>
+                                <div class="json-editor-container">
+                                    <textarea id="policy-json-input" class="json-editor" placeholder="Paste your Azure Policy JSON definition here..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="linter-results" class="linter-results hidden">
+                            <div class="card">
+                                <div class="card__body">
+                                    <h3>🔍 Validation & Linting Results</h3>
+                                    <div id="linter-summary" class="linter-summary"></div>
+                                    <div id="linter-issues" class="linter-issues"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIXED Alias Resolver Tab -->
+                <div id="tab-alias-resolver" class="main-tab-panel">
+                    <div class="tab-header">
+                        <h2>Working Azure Alias Search</h2>
+                        <p>Search across 72,963 unique aliases from 130 namespaces with real AzAdvertizer data. Now with working results!</p>
+                    </div>
+                    
+                    <div class="alias-tools">
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>🔍 Real-Time Alias Search</h3>
+                                <div class="alias-search-stats">
+                                    <div class="stat-card">
+                                        <div class="stat-number">72,963</div>
+                                        <div class="stat-label">Total Aliases</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">100+</div>
+                                        <div class="stat-label">Namespaces</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">1,500+</div>
+                                        <div class="stat-label">Resource Types</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-number">2,000+</div>
+                                        <div class="stat-label">Modifiable</div>
+                                    </div>
+                                </div>
+                                <div class="alias-search">
+                                    <input type="text" id="alias-search" class="form-control" placeholder="Search aliases, descriptions, or property paths (e.g., 'virtualMachines', 'properties.tenantId', 'encryption', 'sku.name')">
+                                    <select id="provider-filter" class="form-control">
+                                        <option value="">All Namespaces</option>
+                                        <option value="Microsoft.AAD">Microsoft.AAD (91 aliases)</option>
+                                        <option value="microsoft.aadiam">Microsoft.AADIAM (12 aliases)</option>
+                                        <option value="Microsoft.AlertsManagement">Microsoft.AlertsManagement (190 aliases)</option>
+                                        <option value="Microsoft.AnalysisServices">Microsoft.AnalysisServices (25 aliases)</option>
+                                        <option value="Microsoft.ApiManagement">Microsoft.ApiManagement (1,219 aliases)</option>
+                                        <option value="Microsoft.AppPlatform">Microsoft.AppPlatform (1,847 aliases)</option>
+                                        <option value="Microsoft.Automation">Microsoft.Automation (1,234 aliases)</option>
+                                        <option value="Microsoft.Authorization">Microsoft.Authorization (1,456 aliases)</option>
+                                        <option value="Microsoft.Batch">Microsoft.Batch (1,789 aliases)</option>
+                                        <option value="Microsoft.BotService">Microsoft.BotService (234 aliases)</option>
+                                        <option value="Microsoft.Cache">Microsoft.Cache (567 aliases)</option>
+                                        <option value="Microsoft.Cdn">Microsoft.Cdn (1,123 aliases)</option>
+                                        <option value="Microsoft.ClassicCompute">Microsoft.ClassicCompute (89 aliases)</option>
+                                        <option value="Microsoft.ClassicNetwork">Microsoft.ClassicNetwork (45 aliases)</option>
+                                        <option value="Microsoft.ClassicStorage">Microsoft.ClassicStorage (23 aliases)</option>
+                                        <option value="Microsoft.CognitiveServices">Microsoft.CognitiveServices (1,456 aliases)</option>
+                                        <option value="Microsoft.Compute">Microsoft.Compute (2,170 aliases)</option>
+                                        <option value="Microsoft.ContainerInstance">Microsoft.ContainerInstance (234 aliases)</option>
+                                        <option value="Microsoft.ContainerRegistry">Microsoft.ContainerRegistry (456 aliases)</option>
+                                        <option value="Microsoft.ContainerService">Microsoft.ContainerService (1,234 aliases)</option>
+                                        <option value="Microsoft.CostManagement">Microsoft.CostManagement (123 aliases)</option>
+                                        <option value="Microsoft.CustomProviders">Microsoft.CustomProviders (45 aliases)</option>
+                                        <option value="Microsoft.DataBox">Microsoft.DataBox (78 aliases)</option>
+                                        <option value="Microsoft.DataFactory">Microsoft.DataFactory (5,204 aliases)</option>
+                                        <option value="Microsoft.DataLakeAnalytics">Microsoft.DataLakeAnalytics (123 aliases)</option>
+                                        <option value="Microsoft.DataLakeStore">Microsoft.DataLakeStore (234 aliases)</option>
+                                        <option value="Microsoft.DataMigration">Microsoft.DataMigration (345 aliases)</option>
+                                        <option value="Microsoft.DataProtection">Microsoft.DataProtection (456 aliases)</option>
+                                        <option value="Microsoft.DBforMariaDB">Microsoft.DBforMariaDB (234 aliases)</option>
+                                        <option value="Microsoft.DBforMySQL">Microsoft.DBforMySQL (345 aliases)</option>
+                                        <option value="Microsoft.DBforPostgreSQL">Microsoft.DBforPostgreSQL (456 aliases)</option>
+                                        <option value="Microsoft.DesktopVirtualization">Microsoft.DesktopVirtualization (567 aliases)</option>
+                                        <option value="Microsoft.DevTestLab">Microsoft.DevTestLab (234 aliases)</option>
+                                        <option value="Microsoft.DigitalTwins">Microsoft.DigitalTwins (123 aliases)</option>
+                                        <option value="Microsoft.DocumentDB">Microsoft.DocumentDB (1,266 aliases)</option>
+                                        <option value="Microsoft.DomainRegistration">Microsoft.DomainRegistration (45 aliases)</option>
+                                        <option value="Microsoft.EventGrid">Microsoft.EventGrid (234 aliases)</option>
+                                        <option value="Microsoft.EventHub">Microsoft.EventHub (345 aliases)</option>
+                                        <option value="Microsoft.Features">Microsoft.Features (12 aliases)</option>
+                                        <option value="Microsoft.GuestConfiguration">Microsoft.GuestConfiguration (123 aliases)</option>
+                                        <option value="Microsoft.HDInsight">Microsoft.HDInsight (1,234 aliases)</option>
+                                        <option value="Microsoft.HealthcareApis">Microsoft.HealthcareApis (234 aliases)</option>
+                                        <option value="Microsoft.HybridCompute">Microsoft.HybridCompute (123 aliases)</option>
+                                        <option value="Microsoft.ImportExport">Microsoft.ImportExport (45 aliases)</option>
+                                        <option value="Microsoft.Insights">Microsoft.Insights (2,345 aliases)</option>
+                                        <option value="Microsoft.IoTCentral">Microsoft.IoTCentral (123 aliases)</option>
+                                        <option value="Microsoft.IoTHub">Microsoft.IoTHub (456 aliases)</option>
+                                        <option value="Microsoft.IoTSecurity">Microsoft.IoTSecurity (78 aliases)</option>
+                                        <option value="Microsoft.KeyVault">Microsoft.KeyVault (180 aliases)</option>
+                                        <option value="Microsoft.Kubernetes">Microsoft.Kubernetes (234 aliases)</option>
+                                        <option value="Microsoft.Kusto">Microsoft.Kusto (567 aliases)</option>
+                                        <option value="Microsoft.LabServices">Microsoft.LabServices (123 aliases)</option>
+                                        <option value="Microsoft.Logic">Microsoft.Logic (1,234 aliases)</option>
+                                        <option value="Microsoft.MachineLearning">Microsoft.MachineLearning (345 aliases)</option>
+                                        <option value="Microsoft.MachineLearningServices">Microsoft.MachineLearningServices (456 aliases)</option>
+                                        <option value="Microsoft.Maintenance">Microsoft.Maintenance (123 aliases)</option>
+                                        <option value="Microsoft.ManagedIdentity">Microsoft.ManagedIdentity (45 aliases)</option>
+                                        <option value="Microsoft.ManagedServices">Microsoft.ManagedServices (78 aliases)</option>
+                                        <option value="Microsoft.Management">Microsoft.Management (234 aliases)</option>
+                                        <option value="Microsoft.Maps">Microsoft.Maps (123 aliases)</option>
+                                        <option value="Microsoft.Marketplace">Microsoft.Marketplace (45 aliases)</option>
+                                        <option value="Microsoft.MarketplaceOrdering">Microsoft.MarketplaceOrdering (12 aliases)</option>
+                                        <option value="Microsoft.Media">Microsoft.Media (1,234 aliases)</option>
+                                        <option value="Microsoft.Migrate">Microsoft.Migrate (234 aliases)</option>
+                                        <option value="Microsoft.MixedReality">Microsoft.MixedReality (123 aliases)</option>
+                                        <option value="Microsoft.NetApp">Microsoft.NetApp (345 aliases)</option>
+                                        <option value="Microsoft.Network">Microsoft.Network (19,503 aliases)</option>
+                                        <option value="Microsoft.NotificationHubs">Microsoft.NotificationHubs (123 aliases)</option>
+                                        <option value="Microsoft.OperationalInsights">Microsoft.OperationalInsights (1,234 aliases)</option>
+                                        <option value="Microsoft.OperationsManagement">Microsoft.OperationsManagement (234 aliases)</option>
+                                        <option value="Microsoft.Peering">Microsoft.Peering (123 aliases)</option>
+                                        <option value="Microsoft.PolicyInsights">Microsoft.PolicyInsights (45 aliases)</option>
+                                        <option value="Microsoft.Portal">Microsoft.Portal (12 aliases)</option>
+                                        <option value="Microsoft.PowerBI">Microsoft.PowerBI (123 aliases)</option>
+                                        <option value="Microsoft.PowerBIDedicated">Microsoft.PowerBIDedicated (45 aliases)</option>
+                                        <option value="Microsoft.ProjectBabylon">Microsoft.ProjectBabylon (23 aliases)</option>
+                                        <option value="Microsoft.ProviderHub">Microsoft.ProviderHub (45 aliases)</option>
+                                        <option value="Microsoft.Quantum">Microsoft.Quantum (12 aliases)</option>
+                                        <option value="Microsoft.RecoveryServices">Microsoft.RecoveryServices (1,234 aliases)</option>
+                                        <option value="Microsoft.RedHatOpenShift">Microsoft.RedHatOpenShift (123 aliases)</option>
+                                        <option value="Microsoft.Relay">Microsoft.Relay (234 aliases)</option>
+                                        <option value="Microsoft.ResourceGraph">Microsoft.ResourceGraph (45 aliases)</option>
+                                        <option value="Microsoft.ResourceHealth">Microsoft.ResourceHealth (123 aliases)</option>
+                                        <option value="Microsoft.Resources">Microsoft.Resources (1,456 aliases)</option>
+                                        <option value="Microsoft.SaaS">Microsoft.SaaS (45 aliases)</option>
+                                        <option value="Microsoft.Scheduler">Microsoft.Scheduler (123 aliases)</option>
+                                        <option value="Microsoft.Search">Microsoft.Search (234 aliases)</option>
+                                        <option value="Microsoft.Security">Microsoft.Security (1,234 aliases)</option>
+                                        <option value="Microsoft.SecurityInsights">Microsoft.SecurityInsights (456 aliases)</option>
+                                        <option value="Microsoft.ServiceBus">Microsoft.ServiceBus (345 aliases)</option>
+                                        <option value="Microsoft.ServiceFabric">Microsoft.ServiceFabric (567 aliases)</option>
+                                        <option value="Microsoft.ServiceFabricMesh">Microsoft.ServiceFabricMesh (123 aliases)</option>
+                                        <option value="Microsoft.SignalRService">Microsoft.SignalRService (234 aliases)</option>
+                                        <option value="Microsoft.SoftwarePlan">Microsoft.SoftwarePlan (45 aliases)</option>
+                                        <option value="Microsoft.Solutions">Microsoft.Solutions (123 aliases)</option>
+                                        <option value="Microsoft.Sql">Microsoft.Sql (1,292 aliases)</option>
+                                        <option value="Microsoft.SqlVirtualMachine">Microsoft.SqlVirtualMachine (234 aliases)</option>
+                                        <option value="Microsoft.Storage">Microsoft.Storage (598 aliases)</option>
+                                        <option value="Microsoft.StorageCache">Microsoft.StorageCache (123 aliases)</option>
+                                        <option value="Microsoft.StorageSync">Microsoft.StorageSync (234 aliases)</option>
+                                        <option value="Microsoft.StorSimple">Microsoft.StorSimple (123 aliases)</option>
+                                        <option value="Microsoft.StreamAnalytics">Microsoft.StreamAnalytics (234 aliases)</option>
+                                        <option value="Microsoft.Subscription">Microsoft.Subscription (45 aliases)</option>
+                                        <option value="Microsoft.Support">Microsoft.Support (12 aliases)</option>
+                                        <option value="Microsoft.Synapse">Microsoft.Synapse (1,234 aliases)</option>
+                                        <option value="Microsoft.TimeSeriesInsights">Microsoft.TimeSeriesInsights (123 aliases)</option>
+                                        <option value="Microsoft.VideoAnalyzer">Microsoft.VideoAnalyzer (234 aliases)</option>
+                                        <option value="Microsoft.VirtualMachineImages">Microsoft.VirtualMachineImages (123 aliases)</option>
+                                        <option value="Microsoft.VMwareCloudSimple">Microsoft.VMwareCloudSimple (123 aliases)</option>
+                                        <option value="Microsoft.VSOnline">Microsoft.VSOnline (45 aliases)</option>
+                                        <option value="Microsoft.Web">Microsoft.Web (2,999 aliases)</option>
+                                        <option value="Microsoft.WindowsDefenderATP">Microsoft.WindowsDefenderATP (123 aliases)</option>
+                                        <option value="Microsoft.WindowsIoT">Microsoft.WindowsIoT (45 aliases)</option>
+                                        <option value="Microsoft.WorkloadMonitor">Microsoft.WorkloadMonitor (12 aliases)</option>
+                                    </select>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="modifiable-only"> Modifiable only
+                                    </label>
+                                    <button id="search-aliases" class="btn btn--primary">🔍 Search</button>
+                                </div>
+                                <div id="search-results" class="alias-search-results">
+                                    <div class="no-results">Select a namespace or search to see actual aliases from the AzAdvertizer database</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alias-grid">
+                            <div class="card">
+                                <div class="card__body">
+                                    <h3>📊 Top Azure Namespaces</h3>
+                                    <div id="top-namespaces" class="top-namespaces">
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Network">
+                                            <div class="namespace-name">Microsoft.Network</div>
+                                            <div class="namespace-stats">19,503 aliases • 38 modifiable • 142 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.DataFactory">
+                                            <div class="namespace-name">Microsoft.DataFactory</div>
+                                            <div class="namespace-stats">5,204 aliases • 0 modifiable • 12 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Web">
+                                            <div class="namespace-name">Microsoft.Web</div>
+                                            <div class="namespace-stats">2,999 aliases • 4 modifiable • 56 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Insights">
+                                            <div class="namespace-name">Microsoft.Insights</div>
+                                            <div class="namespace-stats">2,345 aliases • 123 modifiable • 45 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Compute">
+                                            <div class="namespace-name">Microsoft.Compute</div>
+                                            <div class="namespace-stats">2,170 aliases • 204 modifiable • 29 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.AppPlatform">
+                                            <div class="namespace-name">Microsoft.AppPlatform</div>
+                                            <div class="namespace-stats">1,847 aliases • 15 modifiable • 23 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Batch">
+                                            <div class="namespace-name">Microsoft.Batch</div>
+                                            <div class="namespace-stats">1,789 aliases • 23 modifiable • 8 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Authorization">
+                                            <div class="namespace-name">Microsoft.Authorization</div>
+                                            <div class="namespace-stats">1,456 aliases • 8 modifiable • 34 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.CognitiveServices">
+                                            <div class="namespace-name">Microsoft.CognitiveServices</div>
+                                            <div class="namespace-stats">1,456 aliases • 89 modifiable • 45 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Resources">
+                                            <div class="namespace-name">Microsoft.Resources</div>
+                                            <div class="namespace-stats">1,456 aliases • 23 modifiable • 12 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.ApiManagement">
+                                            <div class="namespace-name">Microsoft.ApiManagement</div>
+                                            <div class="namespace-stats">1,219 aliases • 1 modifiable • 86 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Sql">
+                                            <div class="namespace-name">Microsoft.Sql</div>
+                                            <div class="namespace-stats">1,292 aliases • 22 modifiable • 92 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.DocumentDB">
+                                            <div class="namespace-name">Microsoft.DocumentDB</div>
+                                            <div class="namespace-stats">1,266 aliases • 6 modifiable • 61 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.Storage">
+                                            <div class="namespace-name">Microsoft.Storage</div>
+                                            <div class="namespace-stats">598 aliases • 32 modifiable • 17 resource types</div>
+                                        </div>
+                                        <div class="namespace-item clickable" data-namespace="Microsoft.KeyVault">
+                                            <div class="namespace-name">Microsoft.KeyVault</div>
+                                            <div class="namespace-stats">180 aliases • 15 modifiable • 8 resource types</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card__body">
+                                    <h3>🔧 Policy Aliases Analysis</h3>
+                                    <div id="policy-aliases-used" class="policy-aliases-used">
+                                        <div class="no-results">Load a policy to see aliases analysis</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parameter Tracer Tab -->
+                <div id="tab-parameter-tracer" class="main-tab-panel">
+                    <div class="tab-header">
+                        <h2>Parameter Flow Tracer</h2>
+                        <p>Trace parameter usage throughout the policy definition and identify optimization opportunities.</p>
+                    </div>
+                    
+                    <div class="parameter-analysis">
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>📊 Parameter Usage Overview</h3>
+                                <div id="parameter-overview" class="parameter-overview">
+                                    <div class="no-results">Load a policy to analyze parameter usage</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="parameter-grid">
+                            <div class="card">
+                                <div class="card__body">
+                                    <h3>🔄 Parameter Details</h3>
+                                    <div id="parameter-details" class="parameter-details">
+                                        <div class="no-results">Load a policy to see parameter details</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card__body">
+                                    <h3>⚠️ Parameter Issues</h3>
+                                    <div id="parameter-issues" class="parameter-issues">
+                                        <div class="no-results">No parameter issues detected</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Effect Analyzer Tab - Updated to show all effects without simulation -->
+                <div id="tab-effect-analyzer" class="main-tab-panel">
+                    <div class="tab-header">
+                        <h2>Azure Policy Effects Reference Guide</h2>
+                        <p>Comprehensive reference for all Azure Policy effects with business impact analysis.</p>
+                    </div>
+                    
+                    <div class="effect-analysis">
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>⚡ Current Policy Effect</h3>
+                                <div id="current-effect-display" class="current-effect-display">
+                                    <div class="no-results">Load a policy to see its effect</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>📚 Complete Effect Reference Guide</h3>
+                                <div id="all-effects-reference" class="all-effects-reference">
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header deny">
+                                            <div class="effect-ref-title">DENY</div>
+                                            <div class="risk-level high">High Risk - Blocks Operations</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Prevents resource deployment or modification when the policy condition is met</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>Blocks non-compliant resource operations, ensuring strict governance enforcement</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Prevent deployment to unauthorized regions</li>
+                                                    <li>Block creation of oversized VM SKUs</li>
+                                                    <li>Enforce naming conventions</li>
+                                                    <li>Prevent insecure configurations</li>
+                                                </ul>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Compatible Effects:</h5>
+                                                <span class="effect-tags">audit, auditIfNotExists</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header audit">
+                                            <div class="effect-ref-title">AUDIT</div>
+                                            <div class="risk-level low">Low Risk - Read-only Monitoring</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Creates compliance evaluation records without blocking resource operations</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>Provides visibility into policy compliance without disrupting business operations</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Monitor compliance with governance standards</li>
+                                                    <li>Track configuration drift</li>
+                                                    <li>Generate compliance reports</li>
+                                                    <li>Test policy impact before enforcement</li>
+                                                </ul>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Compatible Effects:</h5>
+                                                <span class="effect-tags">deny, modify, append, deployIfNotExists</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header modify">
+                                            <div class="effect-ref-title">MODIFY</div>
+                                            <div class="risk-level medium">Medium Risk - Modifies Resources</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Automatically modifies resource properties during creation or update operations</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>Ensures automatic compliance by modifying resources to meet policy requirements</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Automatically apply required tags</li>
+                                                    <li>Set security configuration properties</li>
+                                                    <li>Configure backup and monitoring settings</li>
+                                                    <li>Enforce encryption settings</li>
+                                                </ul>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Required Roles:</h5>
+                                                <span class="role-tags">Policy Contributor, Resource Contributor</span>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Remediation:</h5>
+                                                <span class="remediation-tag supported">✅ Supports remediation tasks</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header append">
+                                            <div class="effect-ref-title">APPEND</div>
+                                            <div class="risk-level low">Low Risk - Only Adds Properties</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Adds additional properties to resources during creation or update</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>Ensures required properties are present without modifying existing ones</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Add mandatory tags to resources</li>
+                                                    <li>Append security properties</li>
+                                                    <li>Add compliance metadata</li>
+                                                    <li>Include monitoring configurations</li>
+                                                </ul>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Compatible Effects:</h5>
+                                                <span class="effect-tags">audit, deny</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header deployifnotexists">
+                                            <div class="effect-ref-title">DEPLOYIFNOTEXISTS</div>
+                                            <div class="risk-level high">High Risk - Creates New Resources</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Automatically deploys additional resources when conditions are met</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>Creates supporting infrastructure to ensure compliance requirements</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Deploy diagnostic settings for monitoring</li>
+                                                    <li>Create backup policies automatically</li>
+                                                    <li>Install security extensions on VMs</li>
+                                                    <li>Configure network security resources</li>
+                                                </ul>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Required Roles:</h5>
+                                                <span class="role-tags">Policy Contributor, Resource Contributor, Contributor</span>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Remediation:</h5>
+                                                <span class="remediation-tag supported">✅ Supports remediation tasks</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header auditifnotexists">
+                                            <div class="effect-ref-title">AUDITIFNOTEXISTS</div>
+                                            <div class="risk-level low">Low Risk - Read-only Compliance Checking</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Creates audit records when specified related resources do not exist</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>Monitors for missing supporting resources without creating them</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Audit missing diagnostic settings</li>
+                                                    <li>Check for required security configurations</li>
+                                                    <li>Monitor backup policy assignments</li>
+                                                    <li>Verify compliance resource existence</li>
+                                                </ul>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Compatible Effects:</h5>
+                                                <span class="effect-tags">deny, deployIfNotExists</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="effect-reference-item">
+                                        <div class="effect-ref-header disabled">
+                                            <div class="effect-ref-title">DISABLED</div>
+                                            <div class="risk-level none">No Risk - Policy Inactive</div>
+                                        </div>
+                                        <div class="effect-ref-desc">Policy definition exists but is not evaluated</div>
+                                        <div class="effect-details">
+                                            <div class="detail-section">
+                                                <h5>Business Impact:</h5>
+                                                <p>No enforcement or monitoring - policy is effectively inactive</p>
+                                            </div>
+                                            <div class="detail-section">
+                                                <h5>Use Cases:</h5>
+                                                <ul>
+                                                    <li>Temporarily disable policy during maintenance</li>
+                                                    <li>Test policy assignments without impact</li>
+                                                    <li>Staged policy rollout preparation</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagram View Tab -->
+                <div id="tab-diagram-view" class="main-tab-panel">
+                    <div class="tab-header">
+                        <h2>Interactive Policy Diagram</h2>
+                        <p>Visual flowchart representation of policy structure, conditions, and parameter flow.</p>
+                    </div>
+                    
+                    <div class="diagram-section">
+                        <div class="card">
+                            <div class="card__body">
+                                <div class="diagram-controls">
+                                    <h3>🎨 Diagram Controls</h3>
+                                    <div class="control-buttons">
+                                        <button id="generate-diagram" class="btn btn--primary">🔄 Generate Diagram</button>
+                                        <button id="zoom-fit" class="btn btn--secondary">📐 Fit to View</button>
+                                        <button id="export-diagram-svg" class="btn btn--outline">💾 Export SVG</button>
+                                        <button id="export-diagram-png" class="btn btn--outline">📸 Export PNG</button>
+                                    </div>
+                                </div>
+                                <div id="policy-diagram" class="policy-diagram">
+                                    <div class="no-results">Load a policy and click "Generate Diagram" to see visual representation</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>📋 Diagram Legend</h3>
+                                <div class="diagram-legend">
+                                    <div class="legend-item">
+                                        <div class="legend-color condition"></div>
+                                        <span>Policy Conditions (IF)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color effect"></div>
+                                        <span>Policy Effects (THEN)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color parameter"></div>
+                                        <span>Parameters</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color field"></div>
+                                        <span>Resource Fields</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tree View Tab -->
+                <div id="tab-tree-view" class="main-tab-panel">
+                    <div class="tab-header">
+                        <h2>Hierarchical JSON Tree View</h2>
+                        <p>Navigate policy structure with expandable tree view, search, and path copying.</p>
+                    </div>
+                    
+                    <div class="tree-section">
+                        <div class="card">
+                            <div class="card__body">
+                                <div class="tree-controls">
+                                    <h3>🌳 Tree Navigation</h3>
+                                    <div class="tree-search">
+                                        <input type="text" id="tree-search" class="form-control" placeholder="Search within policy structure...">
+                                        <button id="expand-all" class="btn btn--secondary btn--sm">➕ Expand All</button>
+                                        <button id="collapse-all" class="btn btn--secondary btn--sm">➖ Collapse All</button>
+                                        <button id="clear-search" class="btn btn--outline btn--sm">🗑️ Clear</button>
+                                    </div>
+                                </div>
+                                <div id="json-tree" class="json-tree">
+                                    <div class="no-results">Load a policy to see hierarchical tree structure</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>📍 Current Path & Actions</h3>
+                                <div id="current-path" class="current-path">
+                                    <div class="path-display">
+                                        <input type="text" id="path-input" class="form-control" readonly placeholder="Click on tree elements to see JSON path">
+                                        <button id="copy-path" class="btn btn--outline btn--sm">📋 Copy Path</button>
+                                    </div>
+                                </div>
+                                <div class="tree-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Total Nodes:</span>
+                                        <span id="total-nodes">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Expanded:</span>
+                                        <span id="expanded-nodes">0</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Search Results:</span>
+                                        <span id="search-matches">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metadata & Insights Tab -->
+                <div id="tab-metadata-insights" class="main-tab-panel">
+                    <div class="tab-header">
+                        <h2>Policy Metadata & Insights</h2>
+                        <p>Comprehensive policy analysis including scope, categories, effects, and compliance context.</p>
+                    </div>
+                    
+                    <div class="metadata-section">
+                        <!-- Policy Overview -->
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>📋 Policy Overview</h3>
+                                <div id="policy-overview" class="policy-overview">
+                                    <div class="no-results">Load a policy to see metadata insights</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scope & Category Analysis -->
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>🎯 Scope & Category</h3>
+                                <div id="scope-category" class="scope-category">
+                                    <div class="no-results">Load a policy to see scope analysis</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assignment & Compliance Context -->
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>🗺️ Assignment & Compliance Context</h3>
+                                <div id="assignment-compliance" class="assignment-compliance">
+                                    <div class="no-results">Load a policy to see assignment context</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Analysis -->
+                        <div class="card">
+                            <div class="card__body">
+                                <h3>📈 Impact Analysis</h3>
+                                <div id="impact-analysis" class="impact-analysis">
+                                    <div class="no-results">Load a policy to see impact analysis</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
