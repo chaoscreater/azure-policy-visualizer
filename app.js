@@ -1823,6 +1823,7 @@ class AzurePolicyAnalyzer {
         if (node.in) return 'in';
         if (node.notIn) return 'notIn';
         if (node.contains) return 'contains';
+        if (node.notContains) return 'notContains';
         if (node.exists) return 'exists';
         if (node.greater) return 'greater';
         if (node.greaterOrEquals) return 'greaterOrEquals';
@@ -1835,7 +1836,7 @@ class AzurePolicyAnalyzer {
 
     getValue(node) {
         return node.equals || node.notEquals || node.in || node.notIn || 
-               node.contains || node.greater || node.greaterOrEquals || 
+               node.contains || node.notContains || node.greater || node.greaterOrEquals || 
                node.less || node.lessOrEquals || node.like || node.notLike || 
                node.value || 'true';
     }
@@ -1952,6 +1953,7 @@ class AzurePolicyAnalyzer {
             'in': '∈',
             'notIn': '∉',
             'contains': '⊃',
+            'notContains': '⊅',
             'exists': '∃',
             'greater': '>',
             'greaterOrEquals': '≥',
@@ -2729,6 +2731,7 @@ class AzurePolicyAnalyzer {
             'in': 'is in',
             'notIn': 'is not in',
             'contains': 'contains',
+            'notContains': 'does not contain',
             'exists': 'exists',
             'greater': 'is greater than',
             'greaterOrEquals': 'is greater than or equal to',
