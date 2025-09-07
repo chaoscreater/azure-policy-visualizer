@@ -958,14 +958,6 @@ class AzurePolicyAnalyzer {
     }
 
     initializeDiagramViewEvents() {
-        const generateBtn = document.getElementById('generate-diagram');
-        if (generateBtn) {
-            generateBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.generatePolicyDiagram();
-            });
-        }
-        
         const zoomBtn = document.getElementById('zoom-fit');
         if (zoomBtn) {
             zoomBtn.addEventListener('click', (e) => {
@@ -1481,6 +1473,7 @@ class AzurePolicyAnalyzer {
         this.updateParameterTracer();
         this.updateEffectAnalyzer();
         this.updateMetadataInsights();
+        this.generatePolicyDiagram();
         // Tree view updates when tab is switched
     }
 
