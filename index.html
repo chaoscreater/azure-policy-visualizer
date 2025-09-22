@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Azure Policy Definition Analyzer</title>
+    <title>Azure Policy Visualizer</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -14,7 +14,7 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-text">
-                    <h1>🔍 Azure Policy Definition Analyzer</h1>
+                    <h1>🔍 Azure Policy Visualizer</h1>
                     <p class="subtitle">Enterprise-grade analysis with real AzAdvertizer data (72,963 unique aliases)</p>
                 </div>
                 <div class="header-actions">
@@ -42,7 +42,7 @@
                 <!-- Input & Linter Tab -->
                 <div id="tab-input-linter" class="main-tab-panel active">
                     <div class="tab-header">
-                        <h2>Policy Definition Input & Validation</h2>
+                        <h2>Azure Policy Input & Validation</h2>
                         <p>Import, validate, and lint Azure Policy definitions for schema compliance and best practices.</p>
                     </div>
                     
@@ -53,38 +53,73 @@
                                     <h3>📚 Sample Policies</h3>
                                     <div class="sample-grid">
                                         <button class="sample-btn" data-sample="location-restriction">Location Restriction</button>
-                                        <button class="sample-btn" data-sample="vm-security">VM Security Policy</button>
                                         <button class="sample-btn" data-sample="storage-security">Storage Security</button>
+                                        <button class="sample-btn" data-sample="policy-assignment-example">Policy Assignment Example</button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="card upload-section">
-                                <div class="card__body">
-                                    <h3>📁 File Upload</h3>
-                                    <div class="file-upload-area" id="file-drop-zone">
-                                        <input type="file" id="policy-file" accept=".json">
-                                        <div class="upload-text">
-                                            <span>📎 Drop JSON files here or click to select</span>
-                                            <small>Supports Azure Policy JSON definitions</small>
-                                        </div>
+                        </div>
+
+                        <!-- Policy Assignment Section -->
+                        <div class="card json-input-section">
+                            <div class="card__body">
+                                <div class="input-header">
+                                    <h3>📋 Policy Assignment</h3>
+                                    <div class="input-actions">
+                                        <button id="format-assignment" class="btn btn--secondary btn--sm">🎨 Format JSON</button>
+                                        <button id="clear-assignment" class="btn btn--outline btn--sm">🗑️ Clear</button>
                                     </div>
+                                </div>
+                                <div class="json-editor-container">
+                                    <textarea id="policy-assignment-input" class="json-editor" placeholder="Paste your Azure Policy Assignment JSON here..."></textarea>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Policy Set (Initiative) Section -->
                         <div class="card json-input-section">
                             <div class="card__body">
                                 <div class="input-header">
-                                    <h3>📝 Policy JSON Input</h3>
+                                    <h3>📚 Policy Set (Initiative)</h3>
                                     <div class="input-actions">
-                                        <button id="format-json" class="btn btn--secondary btn--sm">🎨 Format JSON</button>
-                                        <button id="validate-json" class="btn btn--primary btn--sm">✅ Validate</button>
-                                        <button id="clear-input" class="btn btn--outline btn--sm">🗑️ Clear</button>
+                                        <button id="format-policy-set" class="btn btn--secondary btn--sm">🎨 Format JSON</button>
+                                        <button id="clear-policy-set" class="btn btn--outline btn--sm">🗑️ Clear</button>
                                     </div>
                                 </div>
                                 <div class="json-editor-container">
-                                    <textarea id="policy-json-input" class="json-editor" placeholder="Paste your Azure Policy JSON definition here..."></textarea>
+                                    <textarea id="policy-set-input" class="json-editor" placeholder="Paste your Azure Policy Set (Initiative) JSON here..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Policy Definition Section -->
+                        <div class="card json-input-section">
+                            <div class="card__body">
+                                <div class="input-header">
+                                    <h3>📝 Policy Definition</h3>
+                                    <div class="input-actions">
+                                        <button id="format-policy-definition" class="btn btn--secondary btn--sm">🎨 Format JSON</button>
+                                        <button id="clear-policy-definition" class="btn btn--outline btn--sm">🗑️ Clear</button>
+                                    </div>
+                                </div>
+                                <div class="json-editor-container">
+                                    <textarea id="policy-definition-input" class="json-editor" placeholder="Paste your Azure Policy Definition JSON here..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Validation Actions -->
+                        <div class="card validation-actions-section">
+                            <div class="card__body">
+                                <div class="validation-header">
+                                    <h3>🔍 Parameter Validation & Analysis</h3>
+                                    <p>Validate parameter compatibility between policy assignment, policy set, and policy definition</p>
+                                </div>
+                                <div class="validation-actions">
+                                    <button id="validate-parameters" class="btn btn--primary">✅ Validate Parameters</button>
+                                    <button id="validate-all" class="btn btn--secondary">🔍 Validate All JSON</button>
+                                    <button id="clear-all" class="btn btn--outline">🗑️ Clear All</button>
                                 </div>
                             </div>
                         </div>
@@ -624,23 +659,59 @@
                         
                         <div class="card">
                             <div class="card__body">
-                                <h3>📋 Diagram Legend</h3>
+                                <h3>📋 Operator Symbols Legend</h3>
                                 <div class="diagram-legend">
                                     <div class="legend-item">
-                                        <div class="legend-color condition"></div>
-                                        <span>Policy Conditions (IF)</span>
+                                        <span class="operator-symbol">=</span>
+                                        <span>equals</span>
                                     </div>
                                     <div class="legend-item">
-                                        <div class="legend-color effect"></div>
-                                        <span>Policy Effects (THEN)</span>
+                                        <span class="operator-symbol">≠</span>
+                                        <span>notEquals</span>
                                     </div>
                                     <div class="legend-item">
-                                        <div class="legend-color parameter"></div>
-                                        <span>Parameters</span>
+                                        <span class="operator-symbol">∈</span>
+                                        <span>in</span>
                                     </div>
                                     <div class="legend-item">
-                                        <div class="legend-color field"></div>
-                                        <span>Resource Fields</span>
+                                        <span class="operator-symbol">∉</span>
+                                        <span>notIn</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">⊃</span>
+                                        <span>contains</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">⊅</span>
+                                        <span>notContains</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">∃</span>
+                                        <span>exists</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">></span>
+                                        <span>greater</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">≥</span>
+                                        <span>greaterOrEquals</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol"><</span>
+                                        <span>less</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">≤</span>
+                                        <span>lessOrEquals</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">~</span>
+                                        <span>like</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="operator-symbol">≁</span>
+                                        <span>notLike</span>
                                     </div>
                                 </div>
                             </div>

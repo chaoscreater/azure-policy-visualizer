@@ -738,7 +738,7 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-/* Azure Policy Definition Analyzer Styles */
+/* Azure Policy Visualizer Styles */
 
 /* Header Enhancements */
 .header {
@@ -857,7 +857,7 @@ select.form-control {
 
 .input-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-24);
 }
 
@@ -865,9 +865,6 @@ select.form-control {
     background: var(--color-bg-3);
 }
 
-.upload-section {
-    background: var(--color-bg-4);
-}
 
 .sample-grid {
     display: grid;
@@ -894,48 +891,6 @@ select.form-control {
     box-shadow: var(--shadow-sm);
 }
 
-/* File Upload Area */
-.file-upload-area {
-    position: relative;
-    padding: var(--space-32);
-    border: 2px dashed var(--color-border);
-    border-radius: var(--radius-base);
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--duration-fast) var(--ease-standard);
-}
-
-.file-upload-area:hover {
-    border-color: var(--color-primary);
-    background: var(--color-bg-1);
-}
-
-.file-upload-area.dragover {
-    border-color: var(--color-success);
-    background: var(--color-bg-3);
-}
-
-.file-upload-area input[type="file"] {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.upload-text span {
-    display: block;
-    font-size: var(--font-size-lg);
-    color: var(--color-text);
-    margin-bottom: var(--space-8);
-}
-
-.upload-text small {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-}
 
 /* JSON Editor */
 .json-input-section {
@@ -1556,16 +1511,125 @@ select.form-control {
     border: 1px solid var(--color-border);
 }
 
-.legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
+.operator-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: bold;
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+    min-width: 24px;
+    text-align: center;
 }
 
-.legend-color.condition { background-color: #1FB8CD; }
-.legend-color.effect { background-color: #B4413C; }
-.legend-color.parameter { background-color: #FFC185; }
-.legend-color.field { background-color: #5D878F; }
+/* Validation Actions Section */
+.validation-actions-section {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
+    border: 2px solid var(--color-primary);
+}
+
+.validation-header {
+    text-align: center;
+    margin-bottom: var(--space-16);
+}
+
+.validation-header h3 {
+    color: var(--color-primary-dark);
+    margin-bottom: var(--space-8);
+}
+
+.validation-header p {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.validation-actions {
+    display: flex;
+    gap: var(--space-12);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.validation-actions .btn {
+    min-width: 140px;
+}
+
+/* Parameter Comparison Styles */
+.parameter-comparison {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-16);
+    margin-bottom: var(--space-16);
+}
+
+.parameter-comparison h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--space-12);
+    padding-bottom: var(--space-8);
+    border-bottom: 2px solid var(--color-primary-light);
+}
+
+.comparison-section {
+    margin-bottom: var(--space-12);
+}
+
+.comparison-section h5 {
+    color: var(--color-text);
+    margin-bottom: var(--space-8);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.comparison-section ul {
+    margin: 0;
+    padding-left: var(--space-20);
+}
+
+.comparison-section li {
+    margin-bottom: var(--space-8);
+    line-height: 1.4;
+}
+
+.comparison-section li strong {
+    color: var(--color-primary);
+}
+
+.comparison-section li small {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+/* Policy Definition Analysis Styles */
+.policy-definition-analysis {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-16);
+    margin-bottom: var(--space-16);
+}
+
+.policy-definition-analysis h4 {
+    color: var(--color-primary);
+    margin-bottom: var(--space-12);
+    padding-bottom: var(--space-8);
+    border-bottom: 2px solid var(--color-primary-light);
+}
+
+.summary-count.info {
+    background: var(--color-info);
+    color: white;
+}
+
+.summary-count.warning {
+    background: var(--color-warning);
+    color: white;
+}
 
 /* Tree View Styles */
 .tree-section {

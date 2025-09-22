@@ -1,4 +1,4 @@
-// Azure Policy Definition Analyzer - FIXED Implementation with Working Tab Navigation and Alias Search
+// Azure Policy Visualizer - FIXED Implementation with Working Tab Navigation and Alias Search
 class AzurePolicyAnalyzer {
     constructor() {
         this.currentPolicy = null;
@@ -701,98 +701,6 @@ class AzurePolicyAnalyzer {
                     }
                 }
             },
-            "vm-security": {
-                "properties": {
-                    "displayName": "VM Security and Compliance Requirements",
-                    "description": "Comprehensive policy ensuring VM security, encryption, and compliance with organizational standards",
-                    "mode": "Indexed",
-                    "metadata": {
-                        "version": "2.1.0",
-                        "category": "Compute"
-                    },
-                    "parameters": {
-                        "allowedVMSizes": {
-                            "type": "array",
-                            "metadata": {
-                                "description": "List of allowed VM sizes for cost control",
-                                "displayName": "Allowed VM Sizes"
-                            },
-                            "defaultValue": ["Standard_B1ms", "Standard_B2s", "Standard_D2s_v3"]
-                        },
-                        "requireEncryption": {
-                            "type": "boolean",
-                            "metadata": {
-                                "description": "Whether to require disk encryption",
-                                "displayName": "Require Disk Encryption"
-                            },
-                            "defaultValue": true
-                        },
-                        "mandatoryTags": {
-                            "type": "array",
-                            "metadata": {
-                                "description": "List of mandatory tags for compliance",
-                                "displayName": "Mandatory Tags"
-                            },
-                            "defaultValue": ["Environment", "CostCenter", "Owner"]
-                        },
-                        "effect": {
-                            "type": "string",
-                            "metadata": {
-                                "description": "The effect of the policy",
-                                "displayName": "Policy Effect"
-                            },
-                            "allowedValues": ["audit", "deny", "disabled"],
-                            "defaultValue": "deny"
-                        }
-                    },
-                    "policyRule": {
-                        "if": {
-                            "allOf": [
-                                {
-                                    "field": "type",
-                                    "equals": "Microsoft.Compute/virtualMachines"
-                                },
-                                {
-                                    "anyOf": [
-                                        {
-                                            "not": {
-                                                "field": "Microsoft.Compute/virtualMachines/hardwareProfile.vmSize",
-                                                "in": "[parameters('allowedVMSizes')]"
-                                            }
-                                        },
-                                        {
-                                            "allOf": [
-                                                {
-                                                    "value": "[parameters('requireEncryption')]",
-                                                    "equals": true
-                                                },
-                                                {
-                                                    "field": "Microsoft.Compute/virtualMachines/storageProfile.osDisk.encryptionSettings.enabled",
-                                                    "notEquals": "true"
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "count": {
-                                                "value": "[parameters('mandatoryTags')]",
-                                                "name": "tagName",
-                                                "where": {
-                                                    "field": "[concat('tags[', current('tagName'), ']')]",
-                                                    "exists": "false"
-                                                }
-                                            },
-                                            "greater": 0
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        "then": {
-                            "effect": "[parameters('effect')]"
-                        }
-                    }
-                }
-            },
             "storage-security": {
                 "properties": {
                     "displayName": "Storage Account Security Requirements",
@@ -962,58 +870,82 @@ class AzurePolicyAnalyzer {
             });
         });
 
-        // File upload
-        const fileInput = document.getElementById('policy-file');
-        const dropZone = document.getElementById('file-drop-zone');
 
-        if (fileInput) {
-            fileInput.addEventListener('change', (e) => {
-                this.handleFileUpload(e.target.files);
-            });
-        }
-
-        if (dropZone) {
-            dropZone.addEventListener('dragover', (e) => {
+        // JSON editor actions for individual sections
+        const formatAssignmentBtn = document.getElementById('format-assignment');
+        if (formatAssignmentBtn) {
+            formatAssignmentBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-            
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                this.handleFileUpload(e.dataTransfer.files);
-            });
-        }
-
-        // JSON editor actions
-        const formatBtn = document.getElementById('format-json');
-        if (formatBtn) {
-            formatBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.formatJSON();
+                this.formatJSON('policy-assignment-input');
             });
         }
         
-        const validateBtn = document.getElementById('validate-json');
-        if (validateBtn) {
-            validateBtn.addEventListener('click', (e) => {
+        const formatPolicySetBtn = document.getElementById('format-policy-set');
+        if (formatPolicySetBtn) {
+            formatPolicySetBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.validateAndAnalyze();
+                this.formatJSON('policy-set-input');
             });
         }
         
-        const clearBtn = document.getElementById('clear-input');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', (e) => {
+        const formatPolicyDefinitionBtn = document.getElementById('format-policy-definition');
+        if (formatPolicyDefinitionBtn) {
+            formatPolicyDefinitionBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.clearInput();
+                this.formatJSON('policy-definition-input');
             });
         }
+        
+        // Clear buttons for individual sections
+        const clearAssignmentBtn = document.getElementById('clear-assignment');
+        if (clearAssignmentBtn) {
+            clearAssignmentBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearInput('policy-assignment-input');
+            });
+        }
+        
+        const clearPolicySetBtn = document.getElementById('clear-policy-set');
+        if (clearPolicySetBtn) {
+            clearPolicySetBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearInput('policy-set-input');
+            });
+        }
+        
+        const clearPolicyDefinitionBtn = document.getElementById('clear-policy-definition');
+        if (clearPolicyDefinitionBtn) {
+            clearPolicyDefinitionBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearInput('policy-definition-input');
+            });
+        }
+        
+        // Validation actions
+        const validateParametersBtn = document.getElementById('validate-parameters');
+        if (validateParametersBtn) {
+            validateParametersBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.validateParameters();
+            });
+        }
+        
+        const validateAllBtn = document.getElementById('validate-all');
+        if (validateAllBtn) {
+            validateAllBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.validateAllJSON();
+            });
+        }
+        
+        const clearAllBtn = document.getElementById('clear-all');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.clearAllInputs();
+            });
+        }
+        
 
         console.log('✅ Input/linter events initialized');
     }
@@ -1445,51 +1377,34 @@ class AzurePolicyAnalyzer {
     loadSamplePolicy(sampleKey) {
         console.log('Loading sample policy for key:', sampleKey);
         
+        // Handle the new policy assignment example
+        if (sampleKey === 'policy-assignment-example') {
+            this.loadPolicyAssignmentExample();
+            return;
+        }
+        
         const policy = this.samplePolicies[sampleKey];
         if (policy) {
-            const jsonInput = document.getElementById('policy-json-input');
-            if (jsonInput) {
-                jsonInput.value = JSON.stringify(policy, null, 2);
-                console.log('Sample policy loaded successfully');
+            // Load sample policies into the Policy Definition input section
+            const policyDefinitionInput = document.getElementById('policy-definition-input');
+            if (policyDefinitionInput) {
+                policyDefinitionInput.value = JSON.stringify(policy, null, 2);
+                console.log('Sample policy loaded successfully into Policy Definition section');
                 // Automatically validate after loading
                 setTimeout(() => {
-                    this.validateAndAnalyze();
+                    this.validateParameters();
                 }, 100);
             } else {
-                console.error('JSON input element not found');
+                console.error('Policy Definition input element not found');
             }
         } else {
             console.error('Sample policy not found for key:', sampleKey);
         }
     }
 
-    handleFileUpload(files) {
-        if (!files || files.length === 0) return;
 
-        const file = files[0];
-        if (file.type !== 'application/json') {
-            alert('Please upload only JSON files.');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const content = e.target.result;
-                const jsonInput = document.getElementById('policy-json-input');
-                if (jsonInput) {
-                    jsonInput.value = content;
-                    this.validateAndAnalyze();
-                }
-            } catch (error) {
-                alert('Error reading file: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    formatJSON() {
-        const jsonInput = document.getElementById('policy-json-input');
+    formatJSON(inputId = 'policy-json-input') {
+        const jsonInput = document.getElementById(inputId);
         if (!jsonInput || !jsonInput.value.trim()) return;
 
         try {
@@ -1501,8 +1416,43 @@ class AzurePolicyAnalyzer {
         }
     }
 
-    // Validation and analysis
+    // Validation and analysis (backward compatibility for single policy definition)
     validateAndAnalyze() {
+        // Check if we have the new 3-section structure
+        const assignmentInput = document.getElementById('policy-assignment-input');
+        const policySetInput = document.getElementById('policy-set-input');
+        const policyDefinitionInput = document.getElementById('policy-definition-input');
+        
+        // If we have the new structure, use the new validation
+        if (assignmentInput || policySetInput || policyDefinitionInput) {
+            // Check if only policy definition is provided (backward compatibility)
+            if (policyDefinitionInput?.value.trim() && !assignmentInput?.value.trim() && !policySetInput?.value.trim()) {
+                try {
+                    const policy = JSON.parse(policyDefinitionInput.value);
+                    this.currentPolicy = policy;
+                    this.analysisResults = this.performComprehensiveAnalysis(policy);
+                    
+                    console.log('Analysis results:', this.analysisResults);
+                    
+                    this.renderLinterResults();
+                    this.updateAllTabs();
+                    
+                    // Enable export button
+                    const exportBtn = document.getElementById('export-all');
+                    if (exportBtn) exportBtn.disabled = false;
+                    
+                } catch (error) {
+                    console.error('JSON parse error:', error);
+                    this.showLinterError('Invalid JSON: ' + error.message);
+                }
+            } else {
+                // Use the new validation system
+                this.validateAllJSON();
+            }
+            return;
+        }
+
+        // Fallback to old system for backward compatibility
         const jsonInput = document.getElementById('policy-json-input');
         if (!jsonInput?.value.trim()) {
             alert('Please enter a policy definition');
@@ -1868,6 +1818,1663 @@ class AzurePolicyAnalyzer {
                 </div>
             `;
         }
+    }
+
+    // New validation methods for the 3-section structure
+    validateParameters() {
+        const assignmentInput = document.getElementById('policy-assignment-input');
+        const policySetInput = document.getElementById('policy-set-input');
+        const policyDefinitionInput = document.getElementById('policy-definition-input');
+
+        let assignment = null;
+        let policySet = null;
+        let policyDefinition = null;
+
+        // Parse JSON inputs
+        try {
+            if (assignmentInput?.value.trim()) {
+                assignment = JSON.parse(assignmentInput.value);
+                console.log('Parsed assignment:', assignment);
+            }
+            if (policySetInput?.value.trim()) {
+                policySet = JSON.parse(policySetInput.value);
+                console.log('Parsed policy set:', policySet);
+            }
+            if (policyDefinitionInput?.value.trim()) {
+                policyDefinition = JSON.parse(policyDefinitionInput.value);
+                console.log('Parsed policy definition:', policyDefinition);
+            }
+        } catch (error) {
+            alert('Invalid JSON in one or more inputs: ' + error.message);
+            return;
+        }
+
+        // Check if we have any inputs to validate
+        const inputCount = [assignment, policySet, policyDefinition].filter(x => x !== null).length;
+        if (inputCount === 0) {
+            alert('Please provide at least one policy type to validate.');
+            return;
+        }
+
+        // Perform parameter validation
+        const validationResults = this.performParameterValidation(assignment, policySet, policyDefinition);
+        this.displayParameterValidationResults(validationResults);
+    }
+
+    validateAllJSON() {
+        const assignmentInput = document.getElementById('policy-assignment-input');
+        const policySetInput = document.getElementById('policy-set-input');
+        const policyDefinitionInput = document.getElementById('policy-definition-input');
+
+        const results = [];
+
+        // Validate each JSON input
+        if (assignmentInput?.value.trim()) {
+            try {
+                const assignment = JSON.parse(assignmentInput.value);
+                results.push({ type: 'assignment', valid: true, data: assignment });
+            } catch (error) {
+                results.push({ type: 'assignment', valid: false, error: error.message });
+            }
+        }
+
+        if (policySetInput?.value.trim()) {
+            try {
+                const policySet = JSON.parse(policySetInput.value);
+                results.push({ type: 'policySet', valid: true, data: policySet });
+            } catch (error) {
+                results.push({ type: 'policySet', valid: false, error: error.message });
+            }
+        }
+
+        if (policyDefinitionInput?.value.trim()) {
+            try {
+                const policyDefinition = JSON.parse(policyDefinitionInput.value);
+                results.push({ type: 'policyDefinition', valid: true, data: policyDefinition });
+            } catch (error) {
+                results.push({ type: 'policyDefinition', valid: false, error: error.message });
+            }
+        }
+
+        this.displayJSONValidationResults(results);
+    }
+
+    performParameterValidation(assignment, policySet, policyDefinition) {
+        const results = {
+            assignmentToPolicySet: null,
+            assignmentToPolicyDefinition: null,
+            policySetToPolicyDefinition: null,
+            singlePolicyDefinition: null,
+            issues: []
+        };
+
+        // Handle single policy definition validation
+        if (policyDefinition && !assignment && !policySet) {
+            const policyDefinitionParams = policyDefinition.properties?.parameters || {};
+            results.singlePolicyDefinition = this.analyzeSinglePolicyDefinition(policyDefinition, policyDefinitionParams);
+            
+            // Set current policy and update all tabs for single policy definition
+            this.currentPolicy = policyDefinition;
+            this.analysisResults = this.performComprehensiveAnalysis(policyDefinition);
+            this.updateAllTabs();
+            
+            return results;
+        }
+
+        // Handle single policy set validation
+        if (policySet && !assignment && !policyDefinition) {
+            const policySetParams = policySet.properties?.parameters || {};
+            results.singlePolicyDefinition = this.analyzeSinglePolicyDefinition(policySet, policySetParams);
+            
+            // Set current policy and update all tabs for single policy set
+            this.currentPolicy = policySet;
+            this.analysisResults = this.performComprehensiveAnalysis(policySet);
+            this.updateAllTabs();
+            
+            return results;
+        }
+
+        // Validate assignment parameters against policy set
+        if (assignment && policySet) {
+            const assignmentParams = assignment.parameters || assignment.properties?.parameters || {};
+            const policySetParams = policySet.properties?.parameters || {};
+            
+            console.log('Assignment parameters:', assignmentParams);
+            console.log('Policy set parameters:', policySetParams);
+            
+            results.assignmentToPolicySet = this.compareParameters(
+                assignmentParams,
+                policySetParams,
+                'Assignment',
+                'Policy Set'
+            );
+            
+            // Set current policy and update all tabs for policy set analysis
+            this.currentPolicy = policySet;
+            this.analysisResults = this.performComprehensiveAnalysis(policySet);
+            this.updateAllTabs();
+        }
+
+        // Validate assignment parameters against policy definition
+        if (assignment && policyDefinition) {
+            const assignmentParams = assignment.parameters || assignment.properties?.parameters || {};
+            const policyDefinitionParams = policyDefinition.properties?.parameters || {};
+            
+            console.log('Assignment parameters:', assignmentParams);
+            console.log('Policy definition parameters:', policyDefinitionParams);
+            
+            results.assignmentToPolicyDefinition = this.compareParameters(
+                assignmentParams,
+                policyDefinitionParams,
+                'Assignment',
+                'Policy Definition'
+            );
+            
+            // Set current policy and update all tabs for policy definition analysis
+            this.currentPolicy = policyDefinition;
+            this.analysisResults = this.performComprehensiveAnalysis(policyDefinition);
+            this.updateAllTabs();
+        }
+
+        // Validate policy set parameters against policy definition
+        if (policySet && policyDefinition) {
+            const policyDefinitionName = policyDefinition.name;
+            const policyDefinitionParams = policyDefinition.properties?.parameters || {};
+            
+            console.log('Policy definition name:', policyDefinitionName);
+            console.log('Policy definition parameters:', policyDefinitionParams);
+            
+            // Find the specific policy definition reference in the policy set
+            const policyDefinitionReference = this.findPolicyDefinitionReference(policySet, policyDefinitionName);
+            
+            if (policyDefinitionReference) {
+                console.log('Found policy definition reference:', policyDefinitionReference);
+                const policySetParamsForThisDefinition = policyDefinitionReference.parameters || {};
+                
+                results.policySetToPolicyDefinition = this.comparePolicySetToDefinition(
+                    policySetParamsForThisDefinition,
+                    policyDefinitionParams,
+                    policyDefinitionName
+                );
+            } else {
+                console.log('Policy definition not found in policy set');
+                results.policySetToPolicyDefinition = {
+                    providedType: 'Policy Set',
+                    requiredType: 'Policy Definition',
+                    missing: [],
+                    extra: [],
+                    typeMismatches: [],
+                    caseMismatches: [],
+                    valid: true,
+                    error: `Policy definition '${policyDefinitionName}' not found in policy set`
+                };
+            }
+            
+            // Add policy definition analysis when policy set and policy definition are provided
+            results.policyDefinitionAnalysis = this.analyzeSinglePolicyDefinition(policyDefinition, policyDefinitionParams);
+            
+            // Set current policy and update all tabs for policy definition analysis
+            this.currentPolicy = policyDefinition;
+            this.analysisResults = this.performComprehensiveAnalysis(policyDefinition);
+            this.updateAllTabs();
+        }
+
+        // Add policy definition analysis when all three are provided
+        // Note: This is already handled above in the policy set + policy definition section
+        if (assignment && policySet && policyDefinition) {
+            // Policy definition analysis is already added above, no need to duplicate
+            console.log('All three policy types provided - policy definition analysis already completed');
+        }
+
+        return results;
+    }
+
+    compareParameters(providedParams, requiredParams, providedType, requiredType) {
+        const comparison = {
+            providedType,
+            requiredType,
+            missing: [],
+            extra: [],
+            typeMismatches: [],
+            caseMismatches: [],
+            valid: true
+        };
+
+        console.log(`Comparing ${providedType} to ${requiredType}:`);
+        console.log('Provided params:', providedParams);
+        console.log('Required params:', requiredParams);
+
+        // Check for missing required parameters (case-sensitive)
+        for (const [paramName, paramDef] of Object.entries(requiredParams)) {
+            console.log(`Checking parameter: ${paramName}`);
+            console.log(`Has default value: ${paramDef.defaultValue !== undefined}`);
+            console.log(`Default value: ${JSON.stringify(paramDef.defaultValue)}`);
+            
+            // Case-sensitive check for exact parameter name match
+            if (!providedParams.hasOwnProperty(paramName)) {
+                // Check if parameter has a meaningful default value
+                // A parameter has a default value if defaultValue is defined and not null
+                // Empty strings and empty arrays are still considered valid default values
+                const hasDefaultValue = paramDef.defaultValue !== undefined && 
+                                      paramDef.defaultValue !== null;
+                
+                if (!hasDefaultValue) {
+                    comparison.missing.push({
+                        name: paramName,
+                        type: paramDef.type,
+                        description: paramDef.metadata?.description || 'No description',
+                        defaultValue: paramDef.defaultValue
+                    });
+                    comparison.valid = false;
+                    console.log(`Missing required parameter: ${paramName}`);
+                } else {
+                    console.log(`Parameter ${paramName} has default value, not required`);
+                }
+            } else {
+                // Check type compatibility
+                const providedValue = providedParams[paramName];
+                const requiredType = paramDef.type;
+                
+                // Handle different parameter value structures
+                let actualValue;
+                if (typeof providedValue === 'object' && providedValue !== null && providedValue.hasOwnProperty('value')) {
+                    actualValue = providedValue.value;
+                } else {
+                    actualValue = providedValue;
+                }
+                
+                console.log(`Parameter ${paramName}: provided=${JSON.stringify(actualValue)}, expected type=${requiredType}`);
+                
+                if (!this.isTypeCompatible(actualValue, requiredType)) {
+                    comparison.typeMismatches.push({
+                        name: paramName,
+                        providedType: typeof actualValue,
+                        requiredType: requiredType,
+                        value: actualValue
+                    });
+                    comparison.valid = false;
+                    console.log(`Type mismatch for parameter: ${paramName}`);
+                } else {
+                    console.log(`Parameter ${paramName} type is compatible`);
+                }
+            }
+        }
+
+        // Check for case sensitivity mismatches
+        for (const [paramName, paramDef] of Object.entries(requiredParams)) {
+            // Check if parameter exists with exact case
+            if (!providedParams.hasOwnProperty(paramName)) {
+                // Look for case variations in provided parameters
+                const caseVariations = this.findCaseVariationsInParams(providedParams, paramName);
+                if (caseVariations.length > 0) {
+                    comparison.caseMismatches.push({
+                        requiredName: paramName,
+                        providedNames: caseVariations,
+                        type: paramDef.type,
+                        description: paramDef.metadata?.description || 'No description'
+                    });
+                    comparison.valid = false;
+                    console.log(`Case mismatch for parameter: ${paramName} (found: ${caseVariations.join(', ')})`);
+                }
+            }
+        }
+
+        // Check for extra parameters (case-sensitive)
+        for (const paramName of Object.keys(providedParams)) {
+            if (!requiredParams.hasOwnProperty(paramName)) {
+                const providedValue = providedParams[paramName];
+                let actualValue;
+                if (typeof providedValue === 'object' && providedValue !== null && providedValue.hasOwnProperty('value')) {
+                    actualValue = providedValue.value;
+                } else {
+                    actualValue = providedValue;
+                }
+                
+                comparison.extra.push({
+                    name: paramName,
+                    value: actualValue
+                });
+                console.log(`Extra parameter: ${paramName}`);
+            }
+        }
+
+        console.log('Comparison result:', comparison);
+        return comparison;
+    }
+
+    analyzeSinglePolicyDefinition(policyDefinition, parameters) {
+        const analysis = {
+            policyName: policyDefinition.name || policyDefinition.properties?.displayName || 'Unknown Policy',
+            totalParameters: Object.keys(parameters).length,
+            requiredParameters: [],
+            optionalParameters: [],
+            parameterTypes: {},
+            parameterUsage: this.analyzeParameterUsage(policyDefinition, parameters),
+            issues: []
+        };
+
+        for (const [paramName, paramDef] of Object.entries(parameters)) {
+            const hasDefaultValue = paramDef.defaultValue !== undefined && 
+                                  paramDef.defaultValue !== null && 
+                                  paramDef.defaultValue !== '' &&
+                                  !(Array.isArray(paramDef.defaultValue) && paramDef.defaultValue.length === 0);
+
+            analysis.parameterTypes[paramName] = paramDef.type;
+
+            if (hasDefaultValue) {
+                analysis.optionalParameters.push({
+                    name: paramName,
+                    type: paramDef.type,
+                    defaultValue: paramDef.defaultValue,
+                    description: paramDef.metadata?.description || 'No description'
+                });
+            } else {
+                analysis.requiredParameters.push({
+                    name: paramName,
+                    type: paramDef.type,
+                    description: paramDef.metadata?.description || 'No description'
+                });
+            }
+        }
+
+        return analysis;
+    }
+
+    analyzeParameterUsage(policyDefinition, parameters) {
+        const usage = {
+            unusedParameters: [],
+            caseMismatches: [],
+            usedParameters: [],
+            issues: []
+        };
+
+        // For policy sets, check policy definitions within the set
+        if (policyDefinition.properties?.policyDefinitions) {
+            return this.analyzePolicySetParameterUsage(policyDefinition, parameters);
+        }
+
+        const policyRule = policyDefinition.properties?.policyRule;
+        if (!policyRule) {
+            return usage;
+        }
+
+        // Convert policy rule to string for analysis
+        const policyRuleString = JSON.stringify(policyRule);
+        
+        // Check each defined parameter
+        for (const paramName of Object.keys(parameters)) {
+            const paramUsage = this.findParameterUsage(policyRuleString, paramName);
+            
+            if (paramUsage.found) {
+                usage.usedParameters.push({
+                    name: paramName,
+                    usageCount: paramUsage.count,
+                    exactMatches: paramUsage.exactMatches,
+                    caseVariationMatches: paramUsage.caseVariationMatches,
+                    locations: paramUsage.locations,
+                    caseMismatches: paramUsage.caseMismatches
+                });
+                
+                // Check for case mismatches
+                if (paramUsage.caseMismatches.length > 0) {
+                    usage.caseMismatches.push({
+                        definedName: paramName,
+                        usedNames: paramUsage.caseMismatches,
+                        usageCount: paramUsage.count
+                    });
+                }
+            } else {
+                usage.unusedParameters.push({
+                    name: paramName,
+                    type: parameters[paramName].type,
+                    description: parameters[paramName].metadata?.description || 'No description'
+                });
+            }
+        }
+
+        return usage;
+    }
+
+    analyzePolicySetParameterUsage(policySet, parameters) {
+        const usage = {
+            unusedParameters: [],
+            caseMismatches: [],
+            usedParameters: [],
+            issues: []
+        };
+
+        const policyDefinitions = policySet.properties?.policyDefinitions || [];
+        
+        // Convert all policy definitions to string for analysis
+        const allPolicyRulesString = JSON.stringify(policyDefinitions);
+        
+        // Check each defined parameter
+        for (const paramName of Object.keys(parameters)) {
+            const paramUsage = this.findParameterUsage(allPolicyRulesString, paramName);
+            
+            if (paramUsage.found) {
+                usage.usedParameters.push({
+                    name: paramName,
+                    usageCount: paramUsage.count,
+                    exactMatches: paramUsage.exactMatches,
+                    caseVariationMatches: paramUsage.caseVariationMatches,
+                    locations: paramUsage.locations,
+                    caseMismatches: paramUsage.caseMismatches
+                });
+                
+                // Check for case mismatches
+                if (paramUsage.caseMismatches.length > 0) {
+                    usage.caseMismatches.push({
+                        definedName: paramName,
+                        usedNames: paramUsage.caseMismatches,
+                        usageCount: paramUsage.count
+                    });
+                }
+            } else {
+                usage.unusedParameters.push({
+                    name: paramName,
+                    type: parameters[paramName].type,
+                    description: parameters[paramName].metadata?.description || 'No description'
+                });
+            }
+        }
+
+        return usage;
+    }
+
+    findParameterUsage(policyRuleString, paramName) {
+        const result = {
+            found: false,
+            count: 0,
+            locations: [],
+            caseMismatches: [],
+            exactMatches: 0,
+            caseVariationMatches: 0
+        };
+
+        // Look for parameters('paramName') pattern (case-sensitive exact match)
+        const exactPattern = new RegExp(`parameters\\('${paramName}'\\)`, 'g');
+        const exactMatches = policyRuleString.match(exactPattern);
+        
+        if (exactMatches) {
+            result.found = true;
+            result.exactMatches = exactMatches.length;
+            result.count += exactMatches.length;
+            result.locations.push(`Exact match: ${paramName} (${exactMatches.length} times)`);
+        }
+
+        // Look for case variations
+        const caseVariations = this.findCaseVariations(policyRuleString, paramName);
+        if (caseVariations.length > 0) {
+            result.found = true;
+            result.caseMismatches = caseVariations;
+            result.caseVariationMatches = caseVariations.reduce((sum, variation) => sum + variation.count, 0);
+            result.count += result.caseVariationMatches;
+            
+            caseVariations.forEach(variation => {
+                result.locations.push(`Case variation: ${variation.name} (${variation.count} times)`);
+            });
+        }
+
+        return result;
+    }
+
+    findCaseVariations(policyRuleString, paramName) {
+        const variations = [];
+        
+        // Find all parameters('...') patterns in the string
+        const allParameterPattern = /parameters\('([^']+)'\)/gi;
+        const allMatches = [...policyRuleString.matchAll(allParameterPattern)];
+        
+        // Group matches by parameter name (case-insensitive)
+        const parameterGroups = {};
+        allMatches.forEach(match => {
+            const foundParamName = match[1];
+            const lowerKey = foundParamName.toLowerCase();
+            
+            if (!parameterGroups[lowerKey]) {
+                parameterGroups[lowerKey] = [];
+            }
+            parameterGroups[lowerKey].push(foundParamName);
+        });
+        
+        // Check if our parameter name (case-insensitive) exists with different casing
+        const paramNameLower = paramName.toLowerCase();
+        if (parameterGroups[paramNameLower]) {
+            const uniqueVariations = [...new Set(parameterGroups[paramNameLower])];
+            
+            uniqueVariations.forEach(variation => {
+                if (variation !== paramName) { // Only include actual case variations
+                    const pattern = new RegExp(`parameters\\('${variation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'\\)`, 'g');
+                    const matches = policyRuleString.match(pattern);
+                    
+                    if (matches) {
+                        variations.push({
+                            name: variation,
+                            count: matches.length,
+                            originalName: paramName
+                        });
+                    }
+                }
+            });
+        }
+
+        return variations;
+    }
+
+    findPolicyDefinitionReference(policySet, policyDefinitionName) {
+        const policyDefinitions = policySet.properties?.policyDefinitions || [];
+        
+        for (const policyDef of policyDefinitions) {
+            if (policyDef.policyDefinitionName === policyDefinitionName) {
+                return policyDef;
+            }
+        }
+        
+        return null;
+    }
+
+    comparePolicySetToDefinition(policySetParams, policyDefinitionParams, policyDefinitionName) {
+        const comparison = {
+            providedType: 'Policy Set',
+            requiredType: 'Policy Definition',
+            missing: [],
+            extra: [],
+            typeMismatches: [],
+            caseMismatches: [],
+            valid: true,
+            policyDefinitionName: policyDefinitionName
+        };
+
+        console.log(`Comparing Policy Set parameters to Policy Definition '${policyDefinitionName}':`);
+        console.log('Policy set parameters for this definition:', policySetParams);
+        console.log('Policy definition parameters:', policyDefinitionParams);
+
+        // Check for missing required parameters (case-sensitive)
+        for (const [paramName, paramDef] of Object.entries(policyDefinitionParams)) {
+            console.log(`Checking parameter: ${paramName}`);
+            console.log(`Has default value: ${paramDef.defaultValue !== undefined}`);
+            console.log(`Default value: ${JSON.stringify(paramDef.defaultValue)}`);
+            
+            // Case-sensitive check for exact parameter name match
+            if (!policySetParams.hasOwnProperty(paramName)) {
+                // Check if parameter has a meaningful default value
+                // A parameter has a default value if defaultValue is defined and not null
+                // Empty strings and empty arrays are still considered valid default values
+                const hasDefaultValue = paramDef.defaultValue !== undefined && 
+                                      paramDef.defaultValue !== null;
+                
+                if (!hasDefaultValue) {
+                    comparison.missing.push({
+                        name: paramName,
+                        type: paramDef.type,
+                        description: paramDef.metadata?.description || 'No description',
+                        defaultValue: paramDef.defaultValue
+                    });
+                    comparison.valid = false;
+                    console.log(`Missing required parameter: ${paramName}`);
+                } else {
+                    console.log(`Parameter ${paramName} has default value, not required`);
+                }
+            } else {
+                // Parameter exists with correct name - no need to check type compatibility
+                // The policy set parameter value is just a reference to the policy set's own parameters
+                // The actual type validation happens at deployment time
+                console.log(`Parameter ${paramName} exists with correct name`);
+            }
+        }
+
+        // Check for case sensitivity mismatches
+        for (const [paramName, paramDef] of Object.entries(policyDefinitionParams)) {
+            // Check if parameter exists with exact case
+            if (!policySetParams.hasOwnProperty(paramName)) {
+                // Look for case variations in provided parameters
+                const caseVariations = this.findCaseVariationsInParams(policySetParams, paramName);
+                if (caseVariations.length > 0) {
+                    comparison.caseMismatches.push({
+                        requiredName: paramName,
+                        providedNames: caseVariations,
+                        type: paramDef.type,
+                        description: paramDef.metadata?.description || 'No description'
+                    });
+                    comparison.valid = false;
+                    console.log(`Case mismatch for parameter: ${paramName} (found: ${caseVariations.join(', ')})`);
+                }
+            }
+        }
+
+        // Check for extra parameters (parameters in policy set that don't exist in policy definition)
+        for (const paramName of Object.keys(policySetParams)) {
+            if (!policyDefinitionParams.hasOwnProperty(paramName)) {
+                comparison.extra.push({
+                    name: paramName,
+                    value: 'Parameter reference in policy set'
+                });
+                console.log(`Extra parameter: ${paramName}`);
+            }
+        }
+
+        console.log('Policy Set to Policy Definition comparison result:', comparison);
+        return comparison;
+    }
+
+    findCaseVariationsInParams(providedParams, paramName) {
+        const variations = [];
+        const paramNameLower = paramName.toLowerCase();
+        
+        // Check all provided parameters for case variations
+        for (const providedParamName of Object.keys(providedParams)) {
+            if (providedParamName.toLowerCase() === paramNameLower && providedParamName !== paramName) {
+                variations.push(providedParamName);
+            }
+        }
+        
+        return variations;
+    }
+
+    isTypeCompatible(value, expectedType) {
+        switch (expectedType) {
+            case 'String':
+                return typeof value === 'string';
+            case 'Integer':
+                return Number.isInteger(value);
+            case 'Boolean':
+                return typeof value === 'boolean';
+            case 'Array':
+                return Array.isArray(value);
+            case 'Object':
+                return typeof value === 'object' && value !== null && !Array.isArray(value);
+            default:
+                return true; // Unknown types are considered compatible
+        }
+    }
+
+    displayParameterValidationResults(results) {
+        const resultsContainer = document.getElementById('linter-results');
+        const summaryContainer = document.getElementById('linter-summary');
+        const issuesContainer = document.getElementById('linter-issues');
+
+        if (!resultsContainer || !summaryContainer || !issuesContainer) return;
+
+        resultsContainer.classList.remove('hidden');
+
+        // Handle single policy definition validation
+        if (results.singlePolicyDefinition) {
+            const analysis = results.singlePolicyDefinition;
+            this.displaySinglePolicyDefinitionResults(analysis, summaryContainer, issuesContainer);
+            return;
+        }
+
+        let totalIssues = 0;
+        let issuesHtml = '';
+
+        // Process assignment to policy set validation
+        if (results.assignmentToPolicySet) {
+            const comp = results.assignmentToPolicySet;
+            if (!comp.valid) {
+                totalIssues += comp.missing.length + comp.typeMismatches.length + comp.caseMismatches.length;
+                
+                issuesHtml += this.renderParameterComparison(comp);
+            }
+        }
+
+        // Process assignment to policy definition validation
+        if (results.assignmentToPolicyDefinition) {
+            const comp = results.assignmentToPolicyDefinition;
+            if (!comp.valid) {
+                totalIssues += comp.missing.length + comp.typeMismatches.length + comp.caseMismatches.length;
+                
+                issuesHtml += this.renderParameterComparison(comp);
+            }
+        }
+
+        // Process policy set to policy definition validation
+        if (results.policySetToPolicyDefinition) {
+            const comp = results.policySetToPolicyDefinition;
+            if (!comp.valid || comp.error) {
+                totalIssues += comp.missing.length + comp.typeMismatches.length + comp.caseMismatches.length;
+                if (comp.error) totalIssues += 1; // Count error as 1 issue
+                
+                issuesHtml += this.renderParameterComparison(comp);
+            }
+        }
+
+        // Add policy definition analysis if provided
+        if (results.policyDefinitionAnalysis) {
+            const analysis = results.policyDefinitionAnalysis;
+            const unusedParams = analysis.parameterUsage.unusedParameters.length;
+            const caseMismatches = analysis.parameterUsage.caseMismatches.length;
+            
+            totalIssues += unusedParams + caseMismatches;
+            
+            issuesHtml += `
+                <div class="policy-definition-analysis">
+                    <h4>📋 Policy Definition Analysis</h4>
+            `;
+
+            // Parameter Usage Issues
+            if (analysis.parameterUsage.caseMismatches.length > 0) {
+                issuesHtml += `
+                    <div class="comparison-section">
+                        <h5>⚠️ Case Sensitivity Issues:</h5>
+                        <ul>
+                `;
+                analysis.parameterUsage.caseMismatches.forEach(mismatch => {
+                    issuesHtml += `
+                        <li>
+                            <strong>Defined as:</strong> ${mismatch.definedName}
+                            <br><strong>Used as:</strong> ${mismatch.usedNames.map(u => `${u.name} (${u.count} times)`).join(', ')}
+                            <br><small>This will cause parameter resolution failures!</small>
+                        </li>
+                    `;
+                });
+                issuesHtml += `</ul></div>`;
+            }
+
+            if (analysis.parameterUsage.unusedParameters.length > 0) {
+                issuesHtml += `
+                    <div class="comparison-section">
+                        <h5>❌ Unused Parameters:</h5>
+                        <ul>
+                `;
+                analysis.parameterUsage.unusedParameters.forEach(param => {
+                    issuesHtml += `
+                        <li>
+                            <strong>${param.name}</strong> (${param.type})
+                            ${param.description ? `<br><small>${param.description}</small>` : ''}
+                            <br><small>This parameter is defined but never used in the policy rule.</small>
+                        </li>
+                    `;
+                });
+                issuesHtml += `</ul></div>`;
+            }
+
+            if (analysis.requiredParameters.length > 0) {
+                issuesHtml += `
+                    <div class="comparison-section">
+                        <h5>🔴 Required Parameters (must be provided):</h5>
+                        <ul>
+                `;
+                analysis.requiredParameters.forEach(param => {
+                    issuesHtml += `
+                        <li>
+                            <strong>${param.name}</strong> (${param.type})
+                            ${param.description ? `<br><small>${param.description}</small>` : ''}
+                        </li>
+                    `;
+                });
+                issuesHtml += `</ul></div>`;
+            }
+
+            if (analysis.optionalParameters.length > 0) {
+                issuesHtml += `
+                    <div class="comparison-section">
+                        <h5>🟡 Optional Parameters (have default values):</h5>
+                        <ul>
+                `;
+                analysis.optionalParameters.forEach(param => {
+                    issuesHtml += `
+                        <li>
+                            <strong>${param.name}</strong> (${param.type})
+                            <br><small>Default: ${JSON.stringify(param.defaultValue)}</small>
+                            ${param.description ? `<br><small>${param.description}</small>` : ''}
+                        </li>
+                    `;
+                });
+                issuesHtml += `</ul></div>`;
+            }
+
+            issuesHtml += `</div>`;
+        }
+
+        if (totalIssues === 0) {
+            summaryContainer.innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-count success">✅</span>
+                    <span class="summary-label">All parameters are compatible</span>
+                </div>
+            `;
+            issuesContainer.innerHTML = `
+                <div class="linter-issue success">
+                    <div class="issue-icon">✅</div>
+                    <div class="issue-content">
+                        <h4>Parameter Validation Successful</h4>
+                        <p>All provided parameters match the required parameters and types.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            summaryContainer.innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-count error">${totalIssues}</span>
+                    <span class="summary-label">Parameter Issues</span>
+                </div>
+            `;
+            issuesContainer.innerHTML = issuesHtml;
+        }
+    }
+
+    displaySinglePolicyDefinitionResults(analysis, summaryContainer, issuesContainer) {
+        const totalParams = analysis.totalParameters;
+        const requiredParams = analysis.requiredParameters.length;
+        const optionalParams = analysis.optionalParameters.length;
+        const unusedParams = analysis.parameterUsage.unusedParameters.length;
+        const caseMismatches = analysis.parameterUsage.caseMismatches.length;
+
+        summaryContainer.innerHTML = `
+            <div class="summary-item">
+                <span class="summary-count info">${totalParams}</span>
+                <span class="summary-label">Total Parameters</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-count warning">${requiredParams}</span>
+                <span class="summary-label">Required</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-count success">${optionalParams}</span>
+                <span class="summary-label">Optional</span>
+            </div>
+            ${unusedParams > 0 ? `
+            <div class="summary-item">
+                <span class="summary-count error">${unusedParams}</span>
+                <span class="summary-label">Unused</span>
+            </div>
+            ` : ''}
+            ${caseMismatches > 0 ? `
+            <div class="summary-item">
+                <span class="summary-count error">${caseMismatches}</span>
+                <span class="summary-label">Case Issues</span>
+            </div>
+            ` : ''}
+        `;
+
+        let issuesHtml = `
+            <div class="policy-definition-analysis">
+                <h4>📋 Policy Definition: ${analysis.policyName}</h4>
+        `;
+
+        // Parameter Usage Issues
+        if (analysis.parameterUsage.caseMismatches.length > 0) {
+            issuesHtml += `
+                <div class="comparison-section">
+                    <h5>⚠️ Case Sensitivity Issues:</h5>
+                    <ul>
+            `;
+            analysis.parameterUsage.caseMismatches.forEach(mismatch => {
+                issuesHtml += `
+                    <li>
+                        <strong>Defined as:</strong> ${mismatch.definedName}
+                        <br><strong>Used as:</strong> ${mismatch.usedNames.map(u => `${u.name} (${u.count} times)`).join(', ')}
+                        <br><small>This will cause parameter resolution failures!</small>
+                    </li>
+                `;
+            });
+            issuesHtml += `</ul></div>`;
+        }
+
+        if (analysis.parameterUsage.unusedParameters.length > 0) {
+            issuesHtml += `
+                <div class="comparison-section">
+                    <h5>❌ Unused Parameters:</h5>
+                    <ul>
+            `;
+            analysis.parameterUsage.unusedParameters.forEach(param => {
+                issuesHtml += `
+                    <li>
+                        <strong>${param.name}</strong> (${param.type})
+                        ${param.description ? `<br><small>${param.description}</small>` : ''}
+                        <br><small>This parameter is defined but never used in the policy rule.</small>
+                    </li>
+                `;
+            });
+            issuesHtml += `</ul></div>`;
+        }
+
+
+        if (analysis.requiredParameters.length > 0) {
+            issuesHtml += `
+                <div class="comparison-section">
+                    <h5>🔴 Required Parameters (must be provided):</h5>
+                    <ul>
+            `;
+            analysis.requiredParameters.forEach(param => {
+                issuesHtml += `
+                    <li>
+                        <strong>${param.name}</strong> (${param.type})
+                        ${param.description ? `<br><small>${param.description}</small>` : ''}
+                    </li>
+                `;
+            });
+            issuesHtml += `</ul></div>`;
+        }
+
+        if (analysis.optionalParameters.length > 0) {
+            issuesHtml += `
+                <div class="comparison-section">
+                    <h5>🟡 Optional Parameters (have default values):</h5>
+                    <ul>
+            `;
+            analysis.optionalParameters.forEach(param => {
+                issuesHtml += `
+                    <li>
+                        <strong>${param.name}</strong> (${param.type})
+                        <br><small>Default: ${JSON.stringify(param.defaultValue)}</small>
+                        ${param.description ? `<br><small>${param.description}</small>` : ''}
+                    </li>
+                `;
+            });
+            issuesHtml += `</ul></div>`;
+        }
+
+        if (analysis.requiredParameters.length === 0 && analysis.optionalParameters.length === 0) {
+            issuesHtml += `
+                <div class="linter-issue success">
+                    <div class="issue-icon">ℹ️</div>
+                    <div class="issue-content">
+                        <h4>No Parameters Defined</h4>
+                        <p>This policy definition does not require any parameters.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        issuesHtml += `</div>`;
+        issuesContainer.innerHTML = issuesHtml;
+    }
+
+    renderParameterComparison(comparison) {
+        let html = `
+            <div class="parameter-comparison">
+                <h4>${comparison.providedType} → ${comparison.requiredType}${comparison.policyDefinitionName ? ` (${comparison.policyDefinitionName})` : ''}</h4>
+        `;
+
+        // Show error if policy definition not found
+        if (comparison.error) {
+            html += `
+                <div class="comparison-section">
+                    <h5>❌ Error:</h5>
+                    <p>${comparison.error}</p>
+                </div>
+            `;
+        }
+
+        if (comparison.missing.length > 0) {
+            html += `
+                <div class="comparison-section">
+                    <h5>❌ Missing Required Parameters:</h5>
+                    <ul>
+            `;
+            comparison.missing.forEach(param => {
+                html += `
+                    <li>
+                        <strong>${param.name}</strong> (${param.type})
+                        ${param.description ? `<br><small>${param.description}</small>` : ''}
+                    </li>
+                `;
+            });
+            html += `</ul></div>`;
+        }
+
+        if (comparison.typeMismatches.length > 0) {
+            html += `
+                <div class="comparison-section">
+                    <h5>⚠️ Type Mismatches:</h5>
+                    <ul>
+            `;
+            comparison.typeMismatches.forEach(param => {
+                html += `
+                    <li>
+                        <strong>${param.name}</strong>: 
+                        Expected ${param.requiredType}, got ${param.providedType}
+                        ${param.value !== undefined ? `<br><small>Value: ${JSON.stringify(param.value)}</small>` : ''}
+                    </li>
+                `;
+            });
+            html += `</ul></div>`;
+        }
+
+        if (comparison.caseMismatches.length > 0) {
+            html += `
+                <div class="comparison-section">
+                    <h5>⚠️ Case Sensitivity Mismatches:</h5>
+                    <ul>
+            `;
+            comparison.caseMismatches.forEach(param => {
+                html += `
+                    <li>
+                        <strong>Required:</strong> ${param.requiredName}
+                        <br><strong>Provided:</strong> ${param.providedNames.join(', ')}
+                        <br><small>Parameter names must match exactly (case-sensitive)</small>
+                    </li>
+                `;
+            });
+            html += `</ul></div>`;
+        }
+
+        if (comparison.extra.length > 0) {
+            html += `
+                <div class="comparison-section">
+                    <h5>ℹ️ Extra Parameters (not required):</h5>
+                    <ul>
+            `;
+            comparison.extra.forEach(param => {
+                html += `
+                    <li>
+                        <strong>${param.name}</strong>: ${JSON.stringify(param.value)}
+                    </li>
+                `;
+            });
+            html += `</ul></div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    displayJSONValidationResults(results) {
+        const resultsContainer = document.getElementById('linter-results');
+        const summaryContainer = document.getElementById('linter-summary');
+        const issuesContainer = document.getElementById('linter-issues');
+
+        if (!resultsContainer || !summaryContainer || !issuesContainer) return;
+
+        resultsContainer.classList.remove('hidden');
+
+        const validCount = results.filter(r => r.valid).length;
+        const invalidCount = results.filter(r => !r.valid).length;
+
+        summaryContainer.innerHTML = `
+            <div class="summary-item">
+                <span class="summary-count ${invalidCount > 0 ? 'error' : 'success'}">${validCount}/${results.length}</span>
+                <span class="summary-label">Valid JSON</span>
+            </div>
+        `;
+
+        let issuesHtml = '';
+        results.forEach(result => {
+            if (result.valid) {
+                issuesHtml += `
+                    <div class="linter-issue success">
+                        <div class="issue-icon">✅</div>
+                        <div class="issue-content">
+                            <h4>${this.getTypeDisplayName(result.type)} - Valid JSON</h4>
+                            <p>JSON structure is valid and parseable.</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                issuesHtml += `
+                    <div class="linter-issue error">
+                        <div class="issue-icon">❌</div>
+                        <div class="issue-content">
+                            <h4>${this.getTypeDisplayName(result.type)} - Invalid JSON</h4>
+                            <p>${result.error}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        issuesContainer.innerHTML = issuesHtml;
+    }
+
+    getTypeDisplayName(type) {
+        switch (type) {
+            case 'assignment': return 'Policy Assignment';
+            case 'policySet': return 'Policy Set (Initiative)';
+            case 'policyDefinition': return 'Policy Definition';
+            default: return type;
+        }
+    }
+
+    loadPolicyAssignmentExample() {
+        // Updated examples with comprehensive policy set and case sensitivity issues
+        const assignmentExample = {
+            "$schema": "https://raw.githubusercontent.com/Azure/enterprise-azure-policy-as-code/main/Schemas/policy-assignment-schema.json",
+            "nodeName": "/root",
+            "definitionEntry": {
+                "policySetName": "AMBA-FLNZ-Notification-Assets",
+                "displayName": "AMBA - FLNZ - Deploy Azure Monitor Baseline Alerts - Notification Assets",
+                "nonComplianceMessages": [
+                    {
+                        "policyDefinitionReferenceId": null,
+                        "message": "Notification Assets must be deployed to Azure services."
+                    }
+                ]
+            },
+            "assignment": {
+                "name": "FLNZ-Deploy-Notification",
+                "displayName": "AMBA - FLNZ - Deploy Azure Monitor Baseline Alerts - Notification Assets",
+                "description": "Initiative to deploy AMBA Notification Assets"
+            },
+            "metadata": {
+                "_deployed_by_amba": true,
+                "assignedBy": "epac/c3d83650-605d-4145-9d3b-aeb15e3b68bb/epac-prd"
+            },
+            "parameters": {
+                "alzMonitorResourceGroupName": "rg-monitor-amba-aue",
+                "alzMonitorResourceGroupLocation": "australiaeast",
+                "alzMonitorResourceGroupTags": {
+                    "Project": "amba-monitoring"
+                },
+                "alzMonitorActionGroupEmail": [
+                    "75087ea0.example.co.nz@au.teams.ms"
+                ]
+            },
+            "scope": {
+                "epac-prd": [
+                    "/providers/Microsoft.Management/managementGroups/mg-example"
+                ]
+            },
+            "managedIdentityLocations": {
+                "epac-prd": "australiaeast"
+            }
+        };
+
+        const policySetExample = {
+            "$schema": "https://raw.githubusercontent.com/Azure/enterprise-azure-policy-as-code/main/Schemas/policy-set-definition-schema.json",
+            "name": "AMBA-FLNZ-Notification-Assets",
+            "properties": {
+                "displayName": "AMBA - FLNZ - Deploy Azure Monitor Baseline Alerts - Notification Assets",
+                "description": "Initiative to deploy AMBA Notification Assets",
+                "metadata": {
+                    "version": "1.2.0",
+                    "category": "Monitoring",
+                    "alzCloudEnvironments": [
+                        "AzureCloud"
+                    ],
+                    "_deployed_by_amba": true,
+                    "deployedBy": "epac/c3d83650-605d-4145-9d3b-aeb15e3b68bb/epac-prd",
+                    "source": "https://github.com/Azure/azure-monitor-baseline-alerts/"
+                },
+                "parameters": {
+                    "alzMonitorResourceGroupLocation": {
+                        "defaultValue": "centralus",
+                        "metadata": {
+                            "description": "Location of the resource group",
+                            "displayName": "Resource Group Location"
+                        },
+                        "type": "String"
+                    },
+                    "alzMonitorResourceGroupName": {
+                        "defaultValue": "ALZ-Monitoring-RG",
+                        "metadata": {
+                            "description": "Name of the resource group to deploy the alerts to",
+                            "displayName": "Resource Group Name"
+                        },
+                        "type": "String"
+                    },
+                    "alzMonitorResourceGroupTags": {
+                        "defaultValue": {
+                            "_deployed_by_alz_monitor": true
+                        },
+                        "metadata": {
+                            "description": "Tags to apply to the resource group",
+                            "displayName": "Resource Group Tags"
+                        },
+                        "type": "Object"
+                    },
+                    "alzMonitorActionGroupEmail": {
+                        "defaultValue": [],
+                        "metadata": {
+                            "description": "Email addresses to send alerts to",
+                            "displayName": "Action Group Email Addresses"
+                        },
+                        "type": "Array"
+                    },
+                    "byoAlertProcessingRule": {
+                        "defaultValue": "",
+                        "metadata": {
+                            "description": "The Resource ID of an existing Alert Processing Rule already deployed by the customer in his environment",
+                            "displayName": "Customer defined Alert Processing Rule Resource ID"
+                        },
+                        "type": "String"
+                    },
+                    "alzLogicappCallbackUrl": {
+                        "defaultValue": "",
+                        "metadata": {
+                            "description": "Callback URL that triggers the Logic App",
+                            "displayName": "Logic App Callback URL"
+                        },
+                        "type": "String"
+                    },
+                    "alzLogicappResourceId": {
+                        "defaultValue": "",
+                        "metadata": {
+                            "description": "Logic App Resource Id for Action Group to send alerts to",
+                            "displayName": "Logic App Resource Id"
+                        },
+                        "type": "String"
+                    },
+                    "alzFunctionTriggerUrl": {
+                        "defaultValue": "",
+                        "metadata": {
+                            "description": "URL that triggers the Function",
+                            "displayName": "Function Trigger URL"
+                        },
+                        "type": "String"
+                    },
+                    "alzEventHubResourceId": {
+                        "defaultValue": [],
+                        "metadata": {
+                            "description": "Event Hub resource id for action group to send alerts to",
+                            "displayName": "Event Hub resource id"
+                        },
+                        "type": "Array"
+                    },
+                    "alzFunctionResourceId": {
+                        "defaultValue": "",
+                        "metadata": {
+                            "description": "Function Resource Id for Action Group to send alerts to",
+                            "displayName": "Function Resource Id"
+                        },
+                        "type": "String"
+                    },
+                    "alzWebhookServiceUri": {
+                        "defaultValue": [],
+                        "metadata": {
+                            "description": "Indicates the service uri of the webhook to send alerts to",
+                            "displayName": "Webhook Service Uri"
+                        },
+                        "type": "Array"
+                    },
+                    "byoActionGroup": {
+                        "defaultValue": [],
+                        "metadata": {
+                            "description": "The Resource ID of an existing Action Group already deployed by the customer in his environment",
+                            "displayName": "Customer defined Action Group Resource ID"
+                        },
+                        "type": "Array"
+                    },
+                    "alzArmRoleId": {
+                        "defaultValue": [],
+                        "metadata": {
+                            "description": "Arm Built-in Role Id for action group to send alerts to a subscription level, will only send to individual members of role",
+                            "displayName": "Arm Role Id"
+                        },
+                        "type": "Array"
+                    }
+                },
+                "policyDefinitions": [
+                    {
+                        "policyDefinitionReferenceId": "ALZ_AlertProcessing_Rule",
+                        "policyDefinitionName": "AMBA-Deploy_AlertProcessing_Rule",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            },
+                            "alzMonitorActionGroupEmail": {
+                                "value": "[parameters('ALZMonitorActionGroupEmail')]"
+                            },
+                            "byoAlertProcessingRule": {
+                                "value": "[parameters('BYOAlertProcessingRule')]"
+                            },
+                            "alzLogicappCallbackUrl": {
+                                "value": "[parameters('ALZLogicappCallbackUrl')]"
+                            },
+                            "alzLogicappResourceId": {
+                                "value": "[parameters('ALZLogicappResourceId')]"
+                            },
+                            "alzFunctionTriggerUrl": {
+                                "value": "[parameters('ALZFunctionTriggerUrl')]"
+                            },
+                            "alzEventHubResourceId": {
+                                "value": "[parameters('ALZEventHubResourceId')]"
+                            },
+                            "alzFunctionResourceId": {
+                                "value": "[parameters('ALZFunctionResourceId')]"
+                            },
+                            "alzWebhookServiceUri": {
+                                "value": "[parameters('ALZWebhookServiceUri')]"
+                            },
+                            "byoActionGroup": {
+                                "value": "[parameters('BYOActionGroup')]"
+                            },
+                            "alzArmRoleId": {
+                                "value": "[parameters('ALZArmRoleId')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-1",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_Resolved",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-2",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_VMSS_1",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-3",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_VMSS_2",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-4",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_VM_1",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-5",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_FLNZ_DEV03",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-6",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_AVD_VM",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-7",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_FLNZ_DEV02",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    },
+                    {
+                        "policyDefinitionReferenceId": "ALZ_Suppression_AlertProcessing_Rule-8",
+                        "policyDefinitionName": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_AlertRules_1",
+                        "parameters": {
+                            "alzMonitorResourceGroupLocation": {
+                                "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                            },
+                            "alzMonitorResourceGroupName": {
+                                "value": "[parameters('ALZMonitorResourceGroupName')]"
+                            },
+                            "alzMonitorResourceGroupTags": {
+                                "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        };
+
+        const policyDefinitionExample = {
+            "$schema": "https://raw.githubusercontent.com/Azure/enterprise-azure-policy-as-code/main/Schemas/policy-definition-schema.json",
+            "name": "AMBA-FLNZ_Deploy_Suppression_AlertProcessing_Rule_AlertRules_1",
+            "properties": {
+                "displayName": "AMBA - FLNZ - Deploy AMBA Notification Suppression Asset - Alert Rules - 1",
+                "description": "Policy to deploy suppression Alert Processing Rule for all Alert Rules alerts",
+                "mode": "All",
+                "metadata": {
+                    "category": "Monitoring",
+                    "version": "1.0.0",
+                    "alzCloudEnvironments": [
+                        "AzureCloud"
+                    ],
+                    "_deployed_by_amba": "True",
+                    "deployedBy": "epac/c3d83650-605d-4145-9d3b-aeb15e3b68bb/epac-prd",
+                    "source": "https://github.com/Azure/azure-monitor-baseline-alerts/"
+                },
+                "parameters": {
+                    "alzMonitorResourceGroupLocation": {
+                        "metadata": {
+                            "description": "Location of the Resource group the alert is placed in",
+                            "displayName": "Resource Group Location"
+                        },
+                        "defaultValue": "centralus",
+                        "type": "String"
+                    },
+                    "alzMonitorResourceGroupTags": {
+                        "metadata": {
+                            "description": "Tags on the Resource group the alert is placed in",
+                            "displayName": "Resource Group Tags"
+                        },
+                        "defaultValue": {
+                            "_deployed_by_amba": true
+                        },
+                        "type": "Object"
+                    },
+                    "alzMonitorResourceGroupName": {
+                        "metadata": {
+                            "description": "Resource group the alert is placed in",
+                            "displayName": "Resource Group Name"
+                        },
+                        "defaultValue": "rg-monitor-amba-aue",
+                        "type": "String"
+                    },
+                    "monitorDisable": {
+                        "metadata": {
+                            "description": "Tag name to disable monitoring. Set to true if monitoring should be disabled",
+                            "displayName": "Monitoring disabled"
+                        },
+                        "defaultValue": "MonitorDisable",
+                        "type": "String"
+                    }
+                },
+                "policyRule": {
+                    "if": {
+                        "allOf": [
+                            {
+                                "field": "type",
+                                "equals": "Microsoft.Resources/subscriptions"
+                            },
+                            {
+                                "field": "[concat('tags[', parameters('MonitorDisable'), ']')]",
+                                "notEquals": "true"
+                            }
+                        ]
+                    },
+                    "then": {
+                        "effect": "deployIfNotExists",
+                        "details": {
+                            "type": "Microsoft.AlertsManagement/actionRules",
+                            "existenceCondition": {
+                                "allOf": [
+                                    {
+                                        "field": "Microsoft.AlertsManagement/actionRules/description",
+                                        "equals": "AMBA - FLNZ - Notification Assets - Suppression Alert Processing Rule for Alert Rules alerts for Subscription - 1"
+                                    }
+                                ]
+                            },
+                            "roleDefinitionIds": [
+                                "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
+                            ],
+                            "deployment": {
+                                "properties": {
+                                    "parameters": {
+                                        "ALZMonitorResourceGroupName": {
+                                            "value": "[parameters('ALZMonitorResourceGroupName')]"
+                                        },
+                                        "ALZMonitorResourceGroupLocation": {
+                                            "value": "[parameters('ALZMonitorResourceGroupLocation')]"
+                                        },
+                                        "ALZMonitorResourceGroupTags": {
+                                            "value": "[parameters('ALZMonitorResourceGroupTags')]"
+                                        }
+                                    },
+                                    "mode": "incremental",
+                                    "template": {
+                                        "parameters": {
+                                            "ALZMonitorResourceGroupName": {
+                                                "type": "string"
+                                            },
+                                            "ALZMonitorResourceGroupLocation": {
+                                                "type": "string"
+                                            },
+                                            "ALZMonitorResourceGroupTags": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "contentVersion": "1.0.0.0",
+                                        "resources": [
+                                            {
+                                                "type": "Microsoft.Resources/resourceGroups",
+                                                "apiVersion": "2021-04-01",
+                                                "name": "[parameters('ALZMonitorResourceGroupName')]",
+                                                "location": "[parameters('ALZMonitorResourceGroupLocation')]",
+                                                "tags": "[parameters('ALZMonitorResourceGroupTags')]"
+                                            },
+                                            {
+                                                "resourceGroup": "[parameters('ALZMonitorResourceGroupName')]",
+                                                "type": "Microsoft.Resources/deployments",
+                                                "properties": {
+                                                    "parameters": {
+                                                        "ALZMonitorResourceGroupName": {
+                                                            "value": "[parameters('ALZMonitorResourceGroupName')]"
+                                                        }
+                                                    },
+                                                    "mode": "Incremental",
+                                                    "template": {
+                                                        "parameters": {
+                                                            "ALZMonitorResourceGroupName": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "contentVersion": "1.0.0.0",
+                                                        "resources": [
+                                                            {
+                                                                "type": "Microsoft.AlertsManagement/actionRules",
+                                                                "properties": {
+                                                                    "description": "AMBA - FLNZ - Notification Assets - Suppression Alert Processing Rule for Alert Rules alerts for Subscription - 1",
+                                                                    "enabled": true,
+                                                                    "scopes": [
+                                                                        "[subscription().Id]"
+                                                                    ],
+                                                                    "actions": [
+                                                                        {
+                                                                            "actionType": "RemoveAllActionGroups"
+                                                                        }
+                                                                    ],
+                                                                    "conditions": [
+                                                                        {
+                                                                            "field": "TargetResourceType",
+                                                                            "operator": "Contains",
+                                                                            "values": [
+                                                                                "microsoft.insights/scheduledqueryrules"
+                                                                            ]
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                "apiVersion": "2021-08-08",
+                                                                "name": "[concat('AMBA-FLNZ-apr-',subscription().displayName, '-AlertRules-001')]",
+                                                                "location": "Global",
+                                                                "dependsOn": [],
+                                                                "tags": {
+                                                                    "_deployed_by_amba": true
+                                                                }
+                                                            }
+                                                        ],
+                                                        "variables": {},
+                                                        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#"
+                                                    }
+                                                },
+                                                "apiVersion": "2019-10-01",
+                                                "name": "SuppressionRuleDeployment",
+                                                "dependsOn": [
+                                                    "[concat('Microsoft.Resources/resourceGroups/', parameters('ALZMonitorResourceGroupName'))]"
+                                                ]
+                                            }
+                                        ],
+                                        "variables": {},
+                                        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#"
+                                    }
+                                },
+                                "location": "australiaeast"
+                            },
+                            "existenceScope": "resourceGroup",
+                            "deploymentScope": "subscription",
+                            "resourceGroupName": "[parameters('ALZMonitorResourceGroupName')]"
+                        }
+                    }
+                }
+            }
+        };
+
+        // Load the examples into the input fields
+        const assignmentInput = document.getElementById('policy-assignment-input');
+        const policySetInput = document.getElementById('policy-set-input');
+        const policyDefinitionInput = document.getElementById('policy-definition-input');
+        
+        if (assignmentInput) {
+            assignmentInput.value = JSON.stringify(assignmentExample, null, 2);
+        }
+        
+        if (policySetInput) {
+            policySetInput.value = JSON.stringify(policySetExample, null, 2);
+        }
+        
+        if (policyDefinitionInput) {
+            policyDefinitionInput.value = JSON.stringify(policyDefinitionExample, null, 2);
+        }
+        
+        console.log('Policy assignment example loaded successfully');
     }
 
     updateAllTabs() {
@@ -2781,12 +4388,34 @@ class AzurePolicyAnalyzer {
         }
     }
 
-    clearInput() {
-        const jsonInput = document.getElementById('policy-json-input');
+    clearInput(inputId = 'policy-json-input') {
+        const jsonInput = document.getElementById(inputId);
         if (jsonInput) {
             jsonInput.value = '';
         }
 
+        // Only clear global state if clearing the main input
+        if (inputId === 'policy-json-input') {
+            this.currentPolicy = null;
+            this.analysisResults = {};
+            
+            const resultsContainer = document.getElementById('linter-results');
+            if (resultsContainer) {
+                resultsContainer.classList.add('hidden');
+            }
+            
+            const exportBtn = document.getElementById('export-all');
+            if (exportBtn) exportBtn.disabled = true;
+            
+            this.clearAllTabs();
+        }
+    }
+
+    clearAllInputs() {
+        this.clearInput('policy-assignment-input');
+        this.clearInput('policy-set-input');
+        this.clearInput('policy-definition-input');
+        
         this.currentPolicy = null;
         this.analysisResults = {};
         
@@ -2799,7 +4428,6 @@ class AzurePolicyAnalyzer {
         if (exportBtn) exportBtn.disabled = true;
         
         this.clearAllTabs();
-        alert('Input cleared successfully');
     }
 
     clearAllTabs() {
