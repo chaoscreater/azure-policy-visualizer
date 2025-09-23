@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -26,7 +28,7 @@
 
         <!-- Main Dashboard -->
         <div class="analyzer-dashboard">
-            <!-- Updated Tab Navigation - 7 tabs as required -->
+            <!-- Updated Tab Navigation - 6 tabs -->
             <nav class="main-tab-nav">
                 <button class="main-tab-btn active" data-tab="input-linter">🔍 Input & Linter</button>
                 <button class="main-tab-btn" data-tab="alias-resolver">🔗 Alias Resolver</button>
@@ -34,7 +36,6 @@
                 <button class="main-tab-btn" data-tab="effect-analyzer">⚡ Effect Analyzer</button>
                 <button class="main-tab-btn" data-tab="diagram-view">📊 Diagram View</button>
                 <button class="main-tab-btn" data-tab="tree-view">🌳 Tree View</button>
-                <button class="main-tab-btn" data-tab="metadata-insights">📊 Metadata & Insights</button>
             </nav>
 
             <!-- Tab Content -->
@@ -772,55 +773,6 @@
                     </div>
                 </div>
 
-                <!-- Metadata & Insights Tab -->
-                <div id="tab-metadata-insights" class="main-tab-panel">
-                    <div class="tab-header">
-                        <h2>Policy Metadata & Insights</h2>
-                        <p>Comprehensive policy analysis including scope, categories, effects, and compliance context.</p>
-                    </div>
-                    
-                    <div class="metadata-section">
-                        <!-- Policy Overview -->
-                        <div class="card">
-                            <div class="card__body">
-                                <h3>📋 Policy Overview</h3>
-                                <div id="policy-overview" class="policy-overview">
-                                    <div class="no-results">Load a policy to see metadata insights</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Scope & Category Analysis -->
-                        <div class="card">
-                            <div class="card__body">
-                                <h3>🎯 Scope & Category</h3>
-                                <div id="scope-category" class="scope-category">
-                                    <div class="no-results">Load a policy to see scope analysis</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Assignment & Compliance Context -->
-                        <div class="card">
-                            <div class="card__body">
-                                <h3>🗺️ Assignment & Compliance Context</h3>
-                                <div id="assignment-compliance" class="assignment-compliance">
-                                    <div class="no-results">Load a policy to see assignment context</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Impact Analysis -->
-                        <div class="card">
-                            <div class="card__body">
-                                <h3>📈 Impact Analysis</h3>
-                                <div id="impact-analysis" class="impact-analysis">
-                                    <div class="no-results">Load a policy to see impact analysis</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
             </div>
         </div>

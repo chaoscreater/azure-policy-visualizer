@@ -3639,6 +3639,48 @@ class AzurePolicyAnalyzer {
                     <p style="color: var(--color-text-secondary); font-size: 14px;">Interactive visualization of policy logic flow</p>
                 </div>
 
+                <!-- Policy Description Section -->
+                ${policy.description ? `
+                    <div class="policy-description-section" style="margin-bottom: 30px;">
+                        <h4 style="color: var(--color-text); margin-bottom: 15px; display: flex; align-items: center;">
+                            📝 Policy Description
+                        </h4>
+                        <div style="background: var(--color-bg-2); border-radius: 8px; padding: 16px; border-left: 4px solid var(--color-primary);">
+                            <p style="color: var(--color-text); margin: 0; line-height: 1.6; font-size: 14px;">
+                                ${policy.description}
+                            </p>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Policy Mode Section -->
+                <div class="policy-mode-section" style="margin-bottom: 30px;">
+                    <h4 style="color: var(--color-text); margin-bottom: 15px; display: flex; align-items: center;">
+                        ⚙️ Policy Mode
+                    </h4>
+                    <div style="background: var(--color-bg-3); border-radius: 8px; padding: 16px; border-left: 4px solid var(--color-success);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="
+                                display: inline-flex; 
+                                align-items: center; 
+                                padding: 6px 12px; 
+                                background: var(--color-success); 
+                                color: white; 
+                                border-radius: 16px; 
+                                font-size: 12px; 
+                                font-weight: bold;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                            ">
+                                ${policy.mode || 'All'}
+                            </span>
+                            <span style="color: var(--color-text-secondary); font-size: 13px;">
+                                ${this.getModeDescription(policy.mode || 'All')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Parameters Section -->
                 ${parameters.total > 0 ? `
                     <div class="parameters-section" style="margin-bottom: 30px;">
@@ -4139,11 +4181,190 @@ class AzurePolicyAnalyzer {
     }
 
     exportDiagramSVG() {
-        alert('SVG export feature would require additional libraries. Diagram structure saved to memory.');
+        if (!this.currentPolicy) {
+            alert('Please load a policy first to export diagram');
+            return;
+        }
+
+        const diagramContainer = document.getElementById('policy-diagram');
+        if (!diagramContainer) {
+            alert('Diagram container not found');
+            return;
+        }
+
+        try {
+            // Create SVG from the HTML content
+            const svgContent = this.createSVGFromDiagram(diagramContainer);
+            
+            // Create and download the SVG file
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `policy-diagram-${Date.now()}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            console.log('SVG export completed successfully');
+        } catch (error) {
+            console.error('SVG export failed:', error);
+            alert('SVG export failed. Please try again.');
+        }
     }
 
     exportDiagramPNG() {
-        alert('PNG export would require additional libraries. Consider using screenshot tools.');
+        if (!this.currentPolicy) {
+            alert('Please load a policy first to export diagram');
+            return;
+        }
+
+        const diagramContainer = document.getElementById('policy-diagram');
+        if (!diagramContainer) {
+            alert('Diagram container not found');
+            return;
+        }
+
+        // Check if html2canvas is available
+        if (typeof html2canvas === 'undefined') {
+            alert('html2canvas library not loaded. Please refresh the page and try again.');
+            return;
+        }
+
+        try {
+            // Store original content
+            const originalContent = diagramContainer.innerHTML;
+            
+            // Show loading indicator in a separate element, not in the diagram container
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'png-loading-indicator';
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-family: Arial, sans-serif;
+                font-size: 16px;
+            `;
+            loadingDiv.innerHTML = '🔄 Generating PNG...';
+            document.body.appendChild(loadingDiv);
+            
+            // Use html2canvas to capture the diagram with original content
+            html2canvas(diagramContainer, {
+                backgroundColor: '#ffffff',
+                scale: 2, // Higher resolution
+                useCORS: true,
+                allowTaint: true,
+                width: diagramContainer.scrollWidth,
+                height: diagramContainer.scrollHeight,
+                scrollX: 0,
+                scrollY: 0,
+                logging: false // Disable logging for cleaner output
+            }).then(canvas => {
+                // Remove loading indicator
+                const loadingIndicator = document.getElementById('png-loading-indicator');
+                if (loadingIndicator) {
+                    document.body.removeChild(loadingIndicator);
+                }
+                
+                // Convert canvas to PNG and download
+                const link = document.createElement('a');
+                link.download = `policy-diagram-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                console.log('PNG export completed successfully');
+            }).catch(error => {
+                // Remove loading indicator on error
+                const loadingIndicator = document.getElementById('png-loading-indicator');
+                if (loadingIndicator) {
+                    document.body.removeChild(loadingIndicator);
+                }
+                
+                console.error('PNG export failed:', error);
+                alert('PNG export failed. Please try again.');
+            });
+        } catch (error) {
+            console.error('PNG export failed:', error);
+            alert('PNG export failed. Please try again.');
+        }
+    }
+
+    getModeDescription(mode) {
+        const modeDescriptions = {
+            'All': 'Applies to all resource types including extensions',
+            'Indexed': 'Only applies to resource types that support tags and location',
+            'Microsoft.KeyVault/vaults': 'Applies specifically to Key Vault resources',
+            'Microsoft.Network/networkSecurityGroups': 'Applies specifically to Network Security Groups',
+            'Microsoft.Storage/storageAccounts': 'Applies specifically to Storage Accounts',
+            'Microsoft.Compute/virtualMachines': 'Applies specifically to Virtual Machines'
+        };
+        
+        return modeDescriptions[mode] || `Applies to ${mode} resources`;
+    }
+
+    createSVGFromDiagram(container) {
+        // Get the computed styles for the container
+        const computedStyle = window.getComputedStyle(container);
+        const width = container.scrollWidth || 800;
+        const height = container.scrollHeight || 600;
+        
+        // Create SVG wrapper with proper styling
+        let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+        
+        // Add background
+        svgContent += `<rect width="100%" height="100%" fill="${computedStyle.backgroundColor || '#ffffff'}" stroke="${computedStyle.borderColor || '#cccccc'}" stroke-width="1"/>`;
+        
+        // Add CSS styles for proper text rendering
+        svgContent += `<defs>
+            <style>
+                .policy-text { font-family: Arial, sans-serif; fill: #000000; }
+                .policy-title { font-size: 18px; font-weight: bold; fill: #000000; }
+                .policy-subtitle { font-size: 14px; fill: #333333; }
+                .policy-content { font-size: 12px; fill: #000000; }
+                .parameter-card { fill: #f8f9fa; stroke: #dee2e6; stroke-width: 1; }
+                .condition-node { fill: #e3f2fd; stroke: #2196f3; stroke-width: 2; }
+                .effect-badge { fill: #2196f3; stroke: #1976d2; stroke-width: 1; }
+            </style>
+        </defs>`;
+        
+        // Convert HTML content to SVG with proper text colors
+        const htmlContent = container.innerHTML;
+        
+        // Create a foreignObject to embed HTML in SVG with proper styling
+        svgContent += `<foreignObject width="100%" height="100%">`;
+        svgContent += `<div xmlns="http://www.w3.org/1999/xhtml" style="
+            width: 100%; 
+            height: 100%; 
+            font-family: Arial, sans-serif;
+            color: #000000;
+            background-color: transparent;
+        ">`;
+        
+        // Add inline styles to ensure black text
+        svgContent += `<style>
+            * { color: #000000 !important; }
+            h1, h2, h3, h4, h5, h6 { color: #000000 !important; }
+            p, div, span { color: #000000 !important; }
+            .policy-text, .policy-title, .policy-content { color: #000000 !important; }
+        </style>`;
+        
+        svgContent += htmlContent;
+        svgContent += `</div>`;
+        svgContent += `</foreignObject>`;
+        
+        svgContent += `</svg>`;
+        
+        return svgContent;
     }
 
     // Tree View Implementation
