@@ -3833,7 +3833,7 @@ class AzurePolicyAnalyzer {
         if (node.notIn) return 'notIn';
         if (node.contains) return 'contains';
         if (node.notContains) return 'notContains';
-        if (node.exists) return 'exists';
+        if (node.exists !== undefined) return 'exists';
         if (node.greater) return 'greater';
         if (node.greaterOrEquals) return 'greaterOrEquals';
         if (node.less) return 'less';
@@ -3844,10 +3844,33 @@ class AzurePolicyAnalyzer {
     }
 
     getValue(node) {
-        return node.equals || node.notEquals || node.in || node.notIn || 
+        // Handle exists operator specifically
+        if (node.exists !== undefined) {
+            return node.exists;
+        }
+        
+        // Handle other operators
+        const value = node.equals || node.notEquals || node.in || node.notIn || 
                node.contains || node.notContains || node.greater || node.greaterOrEquals || 
                node.less || node.lessOrEquals || node.like || node.notLike || 
-               node.value || 'true';
+               node.value;
+        
+        // If it's a parameter reference, show it as a parameter
+        if (typeof value === 'string' && value.includes('[parameters(')) {
+            return this.formatParameterReference(value);
+        }
+        
+        // If no value found, return null instead of 'true'
+        return value !== undefined ? value : null;
+    }
+
+    formatParameterReference(paramRef) {
+        // Extract parameter name from [parameters('paramName')]
+        const match = paramRef.match(/\[parameters\('([^']+)'\)\]/);
+        if (match) {
+            return `[parameters('${match[1]}')]`;
+        }
+        return paramRef;
     }
 
     getEffectColor(effect) {

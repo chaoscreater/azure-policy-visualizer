@@ -1,0 +1,23 @@
+{
+  "name": "azure-policy-visualizer",
+  "version": "1.0.0",
+  "description": "Enterprise-grade Azure Policy analysis tool with real AzAdvertizer data",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": [
+    "azure",
+    "policy",
+    "visualizer",
+    "governance",
+    "compliance",
+    "analysis"
+  ],
+  "author": "Azure Policy Visualizer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
