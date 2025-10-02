@@ -2357,6 +2357,25 @@ select.form-control {
     margin-left: 20px;
 }
 
+/* Dark mode fix for parameter cards */
+@media (prefers-color-scheme: dark) {
+    .parameter-card {
+        color: var(--color-black) !important;
+    }
+    
+    .parameter-card div {
+        color: var(--color-black) !important;
+    }
+}
+
+[data-color-scheme="dark"] .parameter-card {
+    color: var(--color-black) !important;
+}
+
+[data-color-scheme="dark"] .parameter-card div {
+    color: var(--color-black) !important;
+}
+
 /* Responsive Design for New Features */
 @media (max-width: 768px) {
     .metadata-grid {
